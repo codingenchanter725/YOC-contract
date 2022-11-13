@@ -4,6 +4,7 @@ const privateKey = "627a9b45676e5d2efc5f8a7e2ffa6bc478e81c1db8e89ff95115bc7b73f5
 
 require('@nomiclabs/hardhat-ethers');
 require("@nomiclabs/hardhat-etherscan");
+require("solidity-coverage");
 
 /**
  * @type import('hardhat/config').HardhatUserConfig
@@ -12,8 +13,10 @@ module.exports = {
   defaultNetwork: "hardhat",
   networks: {
     hardhat: {
-      // chainId: 1337,
-      chainId: 97
+      forking: {
+        url: "https://mainnet.infura.io/v3/9aa3d95b3bc440fa88ea12eaa4456161",
+        blockNumber: 15766491
+      },
     },
     testnet: {
       url: "https://data-seed-prebsc-1-s1.binance.org:8545/",//"https://data-seed-prebsc-1-s1.binance.org:8545/",//"https://rpc-mumbai.maticvigil.com/",

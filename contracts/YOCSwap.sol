@@ -21,7 +21,7 @@ contract YOCSwap is Ownable, IYOCSwap {
         routerV2 = IUniswapV2Router02(routerAddress_);
     }
 
-    function getWETH() external view returns (address) {
+    function getWETH() public view returns (address) {
         return routerV2.WETH();
     }
 
@@ -38,7 +38,7 @@ contract YOCSwap is Ownable, IYOCSwap {
         address[] calldata path_
     ) external view returns (uint256) {
         uint256[] memory amounts = routerV2.getAmountsIn(amountOut_, path_);
-        return amounts[1];
+        return amounts[0];
     }
 
     function swapTokenToETH(
@@ -149,6 +149,37 @@ contract YOCSwap is Ownable, IYOCSwap {
             tokenB_, 
             amountADesired_, 
             amountBDesired_, 
+            0, 
+            0, 
+            recipient_, 
+            block.timestamp
+        );
+    }
+
+    function addLiquidityETH(
+        address tokenA_,
+        uint256 amountADesired_,
+        address recipient_
+    ) external payable {
+        address sender = msg.sender;
+        address tokenB_ = getWETH();
+        uint256 amountBDesired_ = msg.value;
+        require (recipient_ != address(0), "recipient is zero address");
+        require (sender != address(0), "caller is zero address");
+        require (tokenA_ != address(0), "invalide token pair");
+        require (amountADesired_ > 0 && amountBDesired_ > 0, "invalide token pair amount");
+
+        IERC20 tokenA = IERC20(tokenA_);
+
+        uint256 desiredBAmount = _calcLiquidTokenBAmount(tokenA_, tokenB_, amountADesired_);
+        require (amountBDesired_ >= desiredBAmount, "insufficient B amount");
+
+        tokenA.safeTransferFrom(sender, address(this), amountADesired_);
+        tokenA.safeApprove(address(routerV2), amountADesired_);
+
+        routerV2.addLiquidityETH{value: amountBDesired_}(
+            tokenA_, 
+            amountADesired_, 
             0, 
             0, 
             recipient_, 
