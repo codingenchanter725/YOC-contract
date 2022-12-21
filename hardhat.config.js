@@ -1,6 +1,6 @@
 require("@nomiclabs/hardhat-waffle");
 
-const privateKey = "1fe52b4091ce2cc541e9a18407b49744d8200ba4431fa416088bbd27529941ba";
+const privateKey = "0367168ddbc0e787a03eff522442ba36b6247d91ed83ca05f7b4285205975876";
 
 require('@nomiclabs/hardhat-ethers');
 require("@nomiclabs/hardhat-etherscan");
@@ -14,8 +14,8 @@ module.exports = {
   networks: {
     hardhat: {
       forking: {
-        url: "https://mainnet.infura.io/v3/9aa3d95b3bc440fa88ea12eaa4456161",
-        blockNumber: 15766491
+        url: "https://goerli.infura.io/v3/9aa3d95b3bc440fa88ea12eaa4456161",
+        blockNumber: 8172558
       },
     },
     testnet: {
@@ -44,7 +44,53 @@ module.exports = {
     apiKey: "NTEEC2JSF6MYS4YFNHHA3Y8CRXIRP5R1HB"
   },
   solidity: {
-    version: "0.8.7",
+    compilers: [
+      {
+        version: "0.8.10",
+        settings: {
+          optimizer: {
+            enabled: true,
+            runs: 200,
+          },
+        }
+      },
+      {
+        version: "0.8.4",
+        settings: {
+          optimizer: {
+            enabled: true,
+            runs: 200,
+          },
+        }
+      },
+      {
+        version: "0.7.6",
+        settings: {
+          optimizer: {
+            enabled: true,
+            runs: 200,
+          },
+        }
+      },
+      {
+        version: "0.6.6",
+        settings: {
+          optimizer: {
+            enabled: true,
+            runs: 200,
+          },
+        }
+      },
+      {
+        version: "0.5.16",
+        settings: {
+          optimizer: {
+            enabled: true,
+            runs: 200,
+          },
+        }
+      },
+    ],
     settings: {
       optimizer: {
         enabled: true,
