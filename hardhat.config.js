@@ -1,6 +1,6 @@
 require("@nomiclabs/hardhat-waffle");
 
-const privateKey = "0367168ddbc0e787a03eff522442ba36b6247d91ed83ca05f7b4285205975876";
+const privateKey = process.env.PRIMARY_ADDRESS;
 
 require('@nomiclabs/hardhat-ethers');
 require("@nomiclabs/hardhat-etherscan");
@@ -15,7 +15,7 @@ module.exports = {
     hardhat: {
       forking: {
         url: "https://goerli.infura.io/v3/9aa3d95b3bc440fa88ea12eaa4456161",
-        blockNumber: 8172558
+        blockNumber: 8184637
       },
     },
     testnet: {
