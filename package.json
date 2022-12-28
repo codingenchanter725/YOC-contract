@@ -11,5 +11,7 @@
     "hardhat": "^2.9.9",
     "solidity-coverage": "^0.7.20"
   },
-  "dependencies": {}
+  "dependencies": {
+    "dotenv": "^16.0.3"
+  }
 }

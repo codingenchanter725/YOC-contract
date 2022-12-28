@@ -1,10 +1,11 @@
 require("@nomiclabs/hardhat-waffle");
 
-const privateKey = process.env.PRIMARY_ADDRESS;
-
 require('@nomiclabs/hardhat-ethers');
 require("@nomiclabs/hardhat-etherscan");
 require("solidity-coverage");
+
+require('dotenv').config();
+const privateKey = process.env.privateKey;
 
 /**
  * @type import('hardhat/config').HardhatUserConfig

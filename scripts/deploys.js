@@ -25,14 +25,15 @@ async function main() {
     const yocswapFactory = await YocswapFactory.deploy(deployer.address);
     await yocswapFactory.deployed();
     console.log("YocswapFactory Address:", yocswapFactory.address);
-    console.log("YocswapFactory INIT_CODE_PAIR_HASH: ", yocswapFactory.INIT_CODE_PAIR_HASH());
+    console.log("YocswapFactory INIT_CODE_PAIR_HASH: ", await yocswapFactory.INIT_CODE_PAIR_HASH());
 
     /* stop and again */ 
 
     // Before deploying, should change 26 line of YocswapLibrary.sol into INIT_CODE_PAIR_HASH.
     // And then, please deploy the YocswapRouter contract
-    const factory = yocswapFactory.address;
-    const WBNB = "0xb4fbf271143f4fbf7b91a5ded31805e42b2208d6";
+    const factory = '0xaAEc40a06542F89Cf171defc07400219A6347082' // yocswapFactory.address;
+    // const WETH = "0xaAEc40a06542F89Cf171defc07400219A6347082";
+    const WBNB = "0xbb4cdb9cbd36b01bd1cbaebf2de08d9173bc095c";
     const YocswapRouter = await hre.ethers.getContractFactory("YocswapRouter");
     const yocswapRouter = await YocswapRouter.deploy(factory, WBNB);
     await yocswapRouter.deployed();
