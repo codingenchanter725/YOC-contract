@@ -152,7 +152,7 @@ library SafeMath {
 	}
 }
 
-contract ERC20 is Context{
+contract DUMMY is Context{
 
 	event Transfer(address indexed from, address indexed to, uint256 value);
 

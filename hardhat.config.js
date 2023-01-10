@@ -15,7 +15,7 @@ module.exports = {
   networks: {
     hardhat: {
       forking: {
-        url: "https://goerli.infura.io/v3/9aa3d95b3bc440fa88ea12eaa4456161",
+        url: "https://goerli.infura.io/v3/",
         blockNumber: 8184637
       },
     },
@@ -42,7 +42,7 @@ module.exports = {
   etherscan: {
     // Your API key for Etherscan
     // Obtain one at https://bscscan.com/
-    apiKey: "NTEEC2JSF6MYS4YFNHHA3Y8CRXIRP5R1HB"
+    apiKey: "KCJ3UZCWWSKIM5CTUS22NQUMGA9AZXCEAU"
   },
   solidity: {
     compilers: [
@@ -56,7 +56,25 @@ module.exports = {
         }
       },
       {
+        version: "0.8.6",
+        settings: {
+          optimizer: {
+            enabled: true,
+            runs: 200,
+          },
+        }
+      },
+      {
         version: "0.8.4",
+        settings: {
+          optimizer: {
+            enabled: true,
+            runs: 200,
+          },
+        }
+      },
+      {
+        version: "0.8.0",
         settings: {
           optimizer: {
             enabled: true,
