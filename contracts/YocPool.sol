@@ -167,7 +167,7 @@ contract YocPool is Ownable, Pausable {
             );
         }
         // Harvest tokens from Masterchef.
-        // harvest();
+        harvest();
 
         // Handle stock funds.
         if (totalShares == 0) {
@@ -246,7 +246,7 @@ contract YocPool is Ownable, Pausable {
             user.shares;
 
         // Harvest token from MasterchefV2.
-        // harvest();
+        harvest();
 
         // Update user share.
         updateUserShare(msg.sender);

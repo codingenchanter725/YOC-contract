@@ -86,9 +86,9 @@ contract TOKEN is IERC20, SafeMath {
      *
      * Initializes contract with initial supply tokens to the creator of the contract
      */
-    constructor() {
-        name = "YOC8 FoundersCoin";
-        symbol = "YOC8";
+    constructor(string memory _name, string memory _symbol) {
+        name = _name;
+        symbol = _symbol;
 
         // e.g. 6, means to divide the token amount by 1000000 to get its user representation
         decimals = 8;
