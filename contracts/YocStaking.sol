@@ -23,7 +23,7 @@ interface IYOCMasterChef {
     function emergencyWithdraw(uint256 _pid) external;
 }
 
-contract YocPool is Ownable, Pausable {
+contract YocStaking is Ownable, Pausable {
     using SafeERC20 for IERC20;
 
     struct UserInfo {

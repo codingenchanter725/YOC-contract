@@ -15,7 +15,7 @@ interface IYOCMasterChef {
     function emergencyWithdraw(uint256 _pid) external;
 }
 
-contract SmartChef is Ownable, Pausable, ReentrancyGuard {
+contract TokenStaking is Ownable, Pausable, ReentrancyGuard {
     using SafeMath for uint256;
     using SafeERC20 for IERC20;
 

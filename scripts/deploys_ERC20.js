@@ -6,10 +6,12 @@ async function main() {
     console.log("Deploying contracts with the account:", deployer.address);
     console.log("Account balance:", (await deployer.getBalance()).toString());
 
-    const ERC20TOKEN = await ethers.getContractFactory("DUMMY");
-    const ERC20Yoc1 = await ERC20TOKEN.deploy("Dummy Token for staking", "DUMMY2");
-    await ERC20Yoc1.deployed();
-    console.log("ERC20Yoc1 Address: ", ERC20Yoc1.address);
+    for (let index = 1; index <= 5; index++) {
+        const _ERC20YocToken = await ethers.getContractFactory("TOKEN");
+        const ERC20YocToken = await _ERC20YocToken.deploy("YOC-FoundersCoin for Liquidity", `YOC${index}`);
+        await ERC20YocToken.deployed();
+        console.log(`ERC20YocToken${index} Address: `, ERC20YocToken.address);
+    }
 }
 
 main()
