@@ -1,6 +1,14 @@
 const { Contract, constants } = require("ethers");
 const { MaxUint256, AddressZero, Zero } = constants;
 
+const WETH = "0xaAEc40a06542F89Cf171defc07400219A6347082";
+const WBNB = "0xbb4cdb9cbd36b01bd1cbaebf2de08d9173bc095c";
+const Yoc1Address = "0x5fb8fBeeFcEd7DFE2C6bA21754EA764aFdE8fe9f";
+const Yoc2Address = "0x6572a96eE12eCf3fDbE92eB2a05f768e40d74080";
+const Yoc3Address = "0x19ff1dA431B6D723561D8E45002234573E64c655";
+const Yoc4Address = "0x6Fb3eAD94e597B75b0Cf2D9d11275Bcb499c9FBC";
+const Yoc5Address = "0x6c9DE6074fc06d8924789d242A7037e48c682C10";
+
 async function main() {
     const [deployer] = await ethers.getSigners();
 
@@ -38,8 +46,6 @@ async function main() {
     // Before deploying, should change 26 line of YocswapLibrary.sol into INIT_CODE_PAIR_HASH.
     // And then, please deploy the YocswapRouter contract
     const factory = yocswapFactory.address;
-    const WETH = "0xaAEc40a06542F89Cf171defc07400219A6347082";
-    // const WBNB = "0xbb4cdb9cbd36b01bd1cbaebf2de08d9173bc095c";
     const _yocswapRouter = await ethers.getContractFactory("YocswapRouter");
     const yocswapRouter = await _yocswapRouter.deploy(factory, WETH);
     await yocswapRouter.deployed();
@@ -51,7 +57,7 @@ async function main() {
     console.log("YocMasterChef Address:", yocMasterChef.address);
 
 
-    // create the pools for YOC Staking
+    // create the pools for YOC Staking ================================== YOC =====================================
     const _dummyForYOCToken = await ethers.getContractFactory("DUMMY");
     const dummyForYOCToken = await _dummyForYOCToken.deploy("Dummy Token for staking", "DUMMY_YOC");
     await dummyForYOCToken.deployed();
@@ -61,10 +67,9 @@ async function main() {
     let pairID = await yocMasterChef.poolLength() - 1;
 
     const _yocStakingPool = await ethers.getContractFactory("YocStaking");
-    // const _tokenStakingPool = await ethers.getContractFactory("TokenStaking");
     const yocStakingPool = await _yocStakingPool.deploy(
-        "0x3EFb72DA89a6d1060A1D6c28a2564a235F5Bf38d", // staked token - WETH, USDC, YOC5, YOC, DUMMY2
-        "0xe73262495BC2a7e98554c1aB2141577018d49fA5", // yocMasterChef.address
+        yocFactory.address, // staked token - YOC:must
+        yocMasterChef.address, // yocMasterChef.address
         deployer.address, // admin
         deployer.address, // fee address
         pairID,
@@ -75,34 +80,35 @@ async function main() {
     await dummyForYOCToken.approve(yocStakingPool.address, MaxUint256);
     console.log("YocStakingPool Approve");
     await yocStakingPool.init(dummyForYOCToken.address);
-    console.log("YocStakingPool init");
+    console.log("YocStakingPool init\n");
 
 
-    // create the pools for Token Staking =======================================================================
-    const _dummyToken = await ethers.getContractFactory("DUMMY");
-    const dummyToken = await _dummyToken.deploy("Dummy Token for staking", "DUMMY_YOC");
-    await dummyToken.deployed();
-    console.log("Dummy Address: ", dummyToken.address);
-
-    await yocMasterChef.add(10, dummyToken.address, false, true);
-    pairID = await yocMasterChef.poolLength() - 1;
-
-    const _tokenStakingPool = await ethers.getContractFactory("YocStaking");
-    // const _tokenStakingPool = await ethers.getContractFactory("TokenStaking");
-    const tokenStakingPool = await _tokenStakingPool.deploy(
-        "0x3EFb72DA89a6d1060A1D6c28a2564a235F5Bf38d", // staked token - WETH, USDC, YOC5, YOC, DUMMY2
-        "0xe73262495BC2a7e98554c1aB2141577018d49fA5", // yocMasterChef.address
-        deployer.address, // admin
-        deployer.address, // fee address
-        pairID,
-        true,
-    );
-    await tokenStakingPool.deployed();
-    console.log("TokenStakingPool Address:", tokenStakingPool.address);
-    await dummyToken.approve(tokenStakingPool.address, MaxUint256);
-    console.log("TokenStakingPool Approve");
-    await tokenStakingPool.init(dummyToken.address);
-    console.log("TokenStakingPool init");
+    const stakingTokenAddressArr = [USDCFactory.address, Yoc1Address];
+    for (let index = 0; index < stakingTokenAddressArr.length; index ++) {
+        // create the pools for Token Staking ================================= USDC, YOC1, TOKEN ======================================
+        const _dummyToken = await ethers.getContractFactory("DUMMY");
+        const dummyToken = await _dummyToken.deploy("Dummy Token for staking", "DUMMY");
+        await dummyToken.deployed();
+        console.log(`Dummy Address: `, dummyToken.address);
+    
+        await yocMasterChef.add(10, dummyToken.address, false, true);
+        pairID = await yocMasterChef.poolLength() - 1;
+    
+        const _tokenStakingPool = await ethers.getContractFactory("TokenStaking");
+        const tokenStakingPool = await _tokenStakingPool.deploy(
+            stakingTokenAddressArr[index], // staked token - USDC, YOC1, TOKEN
+            yocFactory.address, // yoc
+            yocMasterChef.address, // yocMasterChef.address
+            deployer.address, // treasury address
+            pairID,
+        );
+        await tokenStakingPool.deployed();
+        console.log("TokenStakingPool Address:", tokenStakingPool.address);
+        await dummyToken.approve(tokenStakingPool.address, MaxUint256);
+        console.log("TokenStakingPool Approve");
+        await tokenStakingPool.init(dummyToken.address);
+        console.log("TokenStakingPool init\n");
+    }
 }
 
 main()
