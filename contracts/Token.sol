@@ -91,7 +91,7 @@ contract TOKEN is IERC20, SafeMath {
         symbol = _symbol;
 
         // e.g. 6, means to divide the token amount by 1000000 to get its user representation
-        decimals = 8;
+        decimals = 16;
 
         _totalSupply = 100000000000000;
 
