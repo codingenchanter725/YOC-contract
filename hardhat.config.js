@@ -20,7 +20,7 @@ module.exports = {
       },
     },
     testnet: {
-      url: "https://data-seed-prebsc-1-s1.binance.org:8545/",//"https://data-seed-prebsc-1-s1.binance.org:8545/",//"https://rpc-mumbai.maticvigil.com/",
+      url: "https://data-seed-prebsc-1-s3.binance.org:8545/",//"https://data-seed-prebsc-1-s1.binance.org:8545/",//"https://rpc-mumbai.maticvigil.com/",
       chainId: 97,//80001, //97,
       accounts: [privateKey]
     },

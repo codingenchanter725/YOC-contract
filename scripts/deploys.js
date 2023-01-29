@@ -49,7 +49,7 @@ async function main() {
     // Before deploying, should change 26 line of YocswapLibrary.sol into INIT_CODE_PAIR_HASH.
     // And then, please deploy the YocswapRouter contract
     const _yocswapRouter = await ethers.getContractFactory("YocswapRouter");
-    const yocswapRouter = await _yocswapRouter.deploy(yocswapFactory.address, WETH);
+    const yocswapRouter = await _yocswapRouter.deploy(yocswapFactory.address, WBNB);
     await yocswapRouter.deployed();
     console.log("YocswapRouter Address:", yocswapRouter.address);
 
