@@ -1,8 +1,8 @@
 const { Contract, constants } = require("ethers");
 const { MaxUint256, AddressZero, Zero } = constants;
 
-const WETH = "0xaAEc40a06542F89Cf171defc07400219A6347082";
-const WBNB = "0xbb4cdb9cbd36b01bd1cbaebf2de08d9173bc095c";
+const WETH = "0xb4fbf271143f4fbf7b91a5ded31805e42b2208d6";
+const WBNB = "0xae13d989daC2f0dEbFf460aC112a837C89BAa7cd";
 const Yoc1Address = "0x5fb8fBeeFcEd7DFE2C6bA21754EA764aFdE8fe9f";
 const Yoc2Address = "0x6572a96eE12eCf3fDbE92eB2a05f768e40d74080";
 const Yoc3Address = "0x19ff1dA431B6D723561D8E45002234573E64c655";
