@@ -7,7 +7,7 @@ async function main() {
 
     console.log("Account balance:", (await deployer.getBalance()).toString());
 
-    const USDC = await ethers.getContractFactory("TOKEN");
+    const USDC = await ethers.getContractFactory("USDC");
     const USDC_addr = await USDC.deploy();
     await USDC_addr.deployed();
     console.log("YOC Address: ", USDC_addr.address);
