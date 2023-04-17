@@ -59,7 +59,7 @@ contract YOCMasterChef is Ownable, ReentrancyGuard {
         uint256 accYocPerShare
     );
     event Deposit(address indexed user, uint256 indexed pid, uint256 amount);
-    event Withdraw(address indexed user, uint256 indexed pid, uint256 amount);
+    event Withdraw(address indexed user, uint256 indexed pid, uint256 amount, uint256 yocAmount);
     event EmergencyWithdraw(
         address indexed user,
         uint256 indexed pid,
@@ -250,7 +250,7 @@ contract YOCMasterChef is Ownable, ReentrancyGuard {
 
         require(user.amount >= _amount, "withdraw: Insufficient");
 
-        settlePendingYOC(msg.sender, _pid);
+        uint256 yocAmount = settlePendingYOC(msg.sender, _pid);
 
         if (_amount > 0) {
             user.amount = user.amount.sub(_amount);
@@ -272,7 +272,7 @@ contract YOCMasterChef is Ownable, ReentrancyGuard {
         );
         poolInfo[_pid].totalShare = poolInfo[_pid].totalShare.sub(_amount);
 
-        emit Withdraw(msg.sender, _pid, _amount);
+        emit Withdraw(msg.sender, _pid, _amount, yocAmount);
     }
 
     /// @notice Withdraw without caring about the rewards. EMERGENCY ONLY.
@@ -296,7 +296,7 @@ contract YOCMasterChef is Ownable, ReentrancyGuard {
     /// @notice Settles, distribute the pending YOC rewards for given user.
     /// @param _user The user address for settling rewards.
     /// @param _pid The pool id.
-    function settlePendingYOC(address _user, uint256 _pid) internal {
+    function settlePendingYOC(address _user, uint256 _pid) internal returns (uint256) {
         UserInfo memory user = userInfo[_pid][_user];
         uint256 accYOC = user.amount.mul(poolInfo[_pid].accYocPerShare).div(
             ACC_YOC_PRECISION
@@ -304,6 +304,8 @@ contract YOCMasterChef is Ownable, ReentrancyGuard {
         uint256 pending = accYOC.sub(user.rewardDebt);
 
         _safeTransfer(_user, pending);
+        
+        return pending;
     }
 
     /// @notice Safe Transfer YOC.

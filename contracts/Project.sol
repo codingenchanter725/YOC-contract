@@ -32,6 +32,7 @@ contract Project {
     uint256 public apr;
     uint256 public startDate;  
     uint256 public endDate;
+    uint256 public ongoingPercent;
 
     uint256 public depositProfitAmount;
     uint256 public sellAmount;
@@ -57,6 +58,7 @@ contract Project {
         apr = _infoNB[2];
         startDate = _infoNB[3];
         endDate = _infoNB[4];
+        ongoingPercent = _infoNB[5];
 
         sellAmount = _sellAmount;
 

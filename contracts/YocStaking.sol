@@ -120,6 +120,17 @@ contract YocStaking is Ownable, Pausable {
         _;
     }
 
+    /*
+     * @notice View function to see pending reward on frontend.
+     * @param _user: user address
+     * @return Pending reward for a given user
+     */
+    function pendingReward(address _user) external view returns (uint256) {
+        UserInfo memory user = userInfo[_user];
+        uint256 pendingYocReward = calculateTotalPendingYOCRewards();
+        return pendingYocReward * user.shares / totalShares;
+    }
+
     /**
      * @notice Update user share When need to unlock or charges a fee.
      * @param _user: User address

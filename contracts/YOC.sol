@@ -93,7 +93,7 @@ contract YOC is IERC20, SafeMath {
         // e.g. 6, means to divide the token amount by 1000000 to get its user representation
         decimals = 18;
 
-        _totalSupply = 100000000000000000000000000;
+        _totalSupply = 100000000000000000000000000 * (10 ** 18);
 
         balances[msg.sender] = _totalSupply;
         emit Transfer(address(0), msg.sender, _totalSupply);

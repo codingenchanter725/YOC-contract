@@ -1,4 +1,4 @@
-// import { ethers } from "ethers";
+const { ethers } = require("hardhat");
 
 async function main() {
     const [deployer] = await ethers.getSigners();
@@ -7,10 +7,25 @@ async function main() {
     console.log("Account balance:", (await deployer.getBalance()).toString());
 
     for (let index = 1; index <= 5; index++) {
-        const _ERC20YocToken = await ethers.getContractFactory("TOKEN");
-        const ERC20YocToken = await _ERC20YocToken.deploy("YOC-FoundersCoin for Liquidity", `YOC${index}`);
+        const _ERC20YocToken = await hre.ethers.getContractFactory("TOKEN");
+        const constructorArguments = [
+            "YOC-FoundersCoin for Liquidity", `YOC${index}`
+        ]
+        const ERC20YocToken = await _ERC20YocToken.deploy(...constructorArguments);
         await ERC20YocToken.deployed();
         console.log(`ERC20YocToken${index} Address: `, ERC20YocToken.address);
+        await ERC20YocToken.deployTransaction.wait(5);
+
+        try {
+            await hre.run('verify:verify', {
+                address: ERC20YocToken.address,
+                contract: `contracts/Token.sol:TOKEN`,
+                constructorArguments: constructorArguments
+            })
+        } catch (e) {
+            console.log(e);
+        }
+        console.log(`ERC20YocToken${index} Complete!\n\n`);
     }
 }
 

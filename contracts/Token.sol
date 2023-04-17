@@ -53,7 +53,7 @@ contract SafeMath {
     }
 
     function safeSub(uint256 a, uint256 b) public pure returns (uint256 c) {
-        require(b <= a);
+        require(b <= a, "A is not bigger than b");
         c = a - b;
     }
 
@@ -93,7 +93,7 @@ contract TOKEN is IERC20, SafeMath {
         // e.g. 6, means to divide the token amount by 1000000 to get its user representation
         decimals = 16;
 
-        _totalSupply = 100000000000000;
+        _totalSupply = 100000000000000 * (10 ** 16);
 
         balances[msg.sender] = _totalSupply;
         emit Transfer(address(0), msg.sender, _totalSupply);

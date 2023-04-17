@@ -22,6 +22,7 @@ interface IProject {
     function apr() external view returns (uint256);
     function startDate() external view returns (uint256);
     function endDate() external view returns (uint256);
+    function ongoingPercent() external view returns (uint256);
     function depositProfitAmount() external view returns (uint256);
     function sellAmount() external view returns (uint256);
     function investTotalAmount() external view returns (uint256);
@@ -55,6 +56,7 @@ contract ProjectDetail {
         uint256 apr;
         uint256 startDate;  
         uint256 endDate;
+        uint256 ongoingPercent;
 
         uint256 depositProfitAmount;
         uint256 sellAmount;
@@ -109,6 +111,7 @@ contract ProjectDetail {
             apr: project_.apr(),
             startDate: project_.startDate(),
             endDate: project_.endDate(),
+            ongoingPercent: project_.ongoingPercent(),
             depositProfitAmount: project_.depositProfitAmount(),
             sellAmount: project_.sellAmount(),
             investTotalAmount: project_.investTotalAmount(),

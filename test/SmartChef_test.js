@@ -10,6 +10,8 @@ const DEPOSIT_FEE = 25
 const WITHDRAW_FEE = 10
 const PERCENT_PRECISION = 1000
 
+// yoc staking contract test
+
 describe("SmartChef Test", function() {
     let owner
     let teamWallet
@@ -28,14 +30,14 @@ describe("SmartChef Test", function() {
             wallet0, wallet1, wallet2
         ] = await ethers.getSigners()
 
-        const _YOC = await ethers.getContractFactory("BEP20Token")
+        const _YOC = await ethers.getContractFactory("YOC")
         YOC = await _YOC.deploy()
 
-        const _normalLPToken = await ethers.getContractFactory("TestToken")
+        const _normalLPToken = await ethers.getContractFactory("TOKEN")
         normalLPToken = await _normalLPToken.deploy("BUSD-WETH pair", "BUSD-WETH")
-        const _yocLPToken = await ethers.getContractFactory("TestToken")
+        const _yocLPToken = await ethers.getContractFactory("TOKEN")
         yocLPToken = await _yocLPToken.deploy("YOC-WETH pair", "YOC-WETH")
-        const _dummyToken = await ethers.getContractFactory("TestToken")
+        const _dummyToken = await ethers.getContractFactory("TOKEN")
         dummyToken = await _dummyToken.deploy("Dummy Token", "Dummy")
 
         const _yocFarmingContract = await ethers.getContractFactory("YOCMasterChef")
@@ -58,7 +60,7 @@ describe("SmartChef Test", function() {
         )
 
         
-        const _randomToken = await ethers.getContractFactory("TestToken")
+        const _randomToken = await ethers.getContractFactory("TOKEN")
         randomToken = await _randomToken.deploy("Random Token", "RT")
 
         const _smartChef = await ethers.getContractFactory("SmartChef")

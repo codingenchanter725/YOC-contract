@@ -15,6 +15,9 @@ contract YocswapRouter is IYocswapRouter02 {
     address public immutable override factory;
     address public immutable override WETH;
 
+    event AddLiquidity(address tokenA, uint256 amountA, address tokenB, uint256 amountB, address pair, uint256 liquidity);
+    event RemoveLiquidity(address tokenA, uint256 amountA, address tokenB, uint256 amountB, address pair);
+
     modifier ensure(uint256 deadline) {
         require(deadline >= block.timestamp, "YocswapRouter: EXPIRED");
         _;
@@ -109,6 +112,7 @@ contract YocswapRouter is IYocswapRouter02 {
         TransferHelper.safeTransferFrom(tokenA, msg.sender, pair, amountA);
         TransferHelper.safeTransferFrom(tokenB, msg.sender, pair, amountB);
         liquidity = IYocswapPair(pair).mint(to);
+        emit AddLiquidity(tokenA, amountA, tokenB, amountB, pair, liquidity);
     }
 
     function addLiquidityETH(
@@ -146,6 +150,8 @@ contract YocswapRouter is IYocswapRouter02 {
         // refund dust eth, if any
         if (msg.value > amountETH)
             TransferHelper.safeTransferETH(msg.sender, msg.value - amountETH);
+        
+        emit AddLiquidity(WETH, amountETH, token, amountToken, pair, liquidity);
     }
 
     // **** REMOVE LIQUIDITY ****
@@ -173,6 +179,8 @@ contract YocswapRouter is IYocswapRouter02 {
             : (amount1, amount0);
         require(amountA >= amountAMin, "YocswapRouter: INSUFFICIENT_A_AMOUNT");
         require(amountB >= amountBMin, "YocswapRouter: INSUFFICIENT_B_AMOUNT");
+
+        emit RemoveLiquidity(tokenA, amountA, tokenB, amountB, pair);
     }
 
     function removeLiquidityETH(
@@ -198,9 +206,11 @@ contract YocswapRouter is IYocswapRouter02 {
             address(this),
             deadline
         );
+        address pair = YocswapLibrary.pairFor(factory, token, WETH);
         TransferHelper.safeTransfer(token, to, amountToken);
         IWETH(WETH).withdraw(amountETH);
         TransferHelper.safeTransferETH(to, amountETH);
+        emit RemoveLiquidity(WETH, amountETH, token, amountToken, pair);
     }
 
     function removeLiquidityWithPermit(

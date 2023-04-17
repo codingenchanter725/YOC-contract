@@ -21,7 +21,7 @@ contract ProjectManage is Ownable {
         string memory name,
         string memory symbol,
         uint256 total,
-        uint8 decimal,
+        uint8 decimals,
         uint256 sellAmount,
         string[] memory _infoST,
         uint256[] memory _infoNB,
@@ -34,7 +34,7 @@ contract ProjectManage is Ownable {
         }
 
         address[] memory _infoAD = new address[](3);
-        TokenTemplate newToken = new TokenTemplate(name, symbol, total, decimal, sellAmount, msg.sender);
+        TokenTemplate newToken = new TokenTemplate(name, symbol, total, decimals, sellAmount, msg.sender);
 
         _infoAD[0] = address(newToken);
         _infoAD[1] = address(_investToken);
