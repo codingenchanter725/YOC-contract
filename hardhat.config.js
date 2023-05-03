@@ -42,7 +42,8 @@ module.exports = {
   etherscan: {
     // Your API key for Etherscan
     // Obtain one at https://bscscan.com/
-    apiKey: "KK9WGHD5CUJXH2DEVJKV5M47VZDCE6N4WX"
+    // apiKey: "KK9WGHD5CUJXH2DEVJKV5M47VZDCE6N4WX"
+    apiKey: "UCDP2TXWW1PPZFRAMTUQNS5KGFXPESH5RH" //bsc
   },
   solidity: {
     compilers: [

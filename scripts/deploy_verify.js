@@ -4,11 +4,6 @@ const { MaxUint256, AddressZero, Zero } = constants;
 
 const WETH = "0xb4fbf271143f4fbf7b91a5ded31805e42b2208d6";
 const WBNB = "0xae13d989daC2f0dEbFf460aC112a837C89BAa7cd";
-const Yoc1Address = "0x866020AFa80279595BfD2cC38f19D1a5E9a2aBBf";
-const Yoc2Address = "0x1a0946DeB7b5Cbc2b03beE2ff23EE7165729860f";
-const Yoc3Address = "0xB7E8F4F64D9F3EC0338d8872E2F28D8Fc490C763";
-const Yoc4Address = "0x900d3C76D20C63CE1E96AF83Ea0BC505a15Dbf0f";
-const Yoc5Address = "0xC25C0d4E47fF3cfbBc973EBF99d0237daEE57411";
 
 const overrides = {
     gasLimit: 9999999
