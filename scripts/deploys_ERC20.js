@@ -11,8 +11,11 @@ async function main() {
         const constructorArguments = [
             "YOC-FoundersCoin for Liquidity", `YOC${index}`
         ]
+        console.log(`${index}: start deploy`);
         const ERC20YocToken = await _ERC20YocToken.deploy(...constructorArguments);
+        console.log(`${index}: processing deploy`);
         await ERC20YocToken.deployed();
+        console.log(`${index}: end deploy`);
         console.log(`ERC20YocToken${index} Address: `, ERC20YocToken.address);
         await ERC20YocToken.deployTransaction.wait(5);
 

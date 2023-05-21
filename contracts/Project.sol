@@ -35,6 +35,7 @@ contract Project {
     uint256 public ongoingPercent;
 
     uint256 public depositProfitAmount;
+    uint256 public originProfitAmount;
     uint256 public sellAmount;
     uint256 public investTotalAmount = 0;
 
@@ -113,7 +114,7 @@ contract Project {
         uint256 claimAmount = 0;
         if(!claimable) {
             uint256 userShareAmount = IShareToken(address(shareToken)).balanceOfAt(_userAddr, IShareToken(address(shareToken)).getCurrentSnapshotId());
-            claimAmount = (userShareAmount * depositProfitAmount)/shareToken.totalSupply();
+            claimAmount = (userShareAmount * originProfitAmount)/shareToken.totalSupply();
         }
         return (claimable, claimAmount);
     }
@@ -128,6 +129,7 @@ contract Project {
         }
         investToken.transferFrom(msg.sender, address(this), amount);
         depositProfitAmount = amount;
+        originProfitAmount = amount;
         IShareToken(address(shareToken)).snapshot();
         emit profitDeposited(address(this), amount);
         return true;

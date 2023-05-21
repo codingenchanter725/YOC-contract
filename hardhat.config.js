@@ -29,6 +29,11 @@ module.exports = {
       chainId: 5,//80001, //97,
       accounts: [privateKey]
     },
+    sepolia: {
+      url: "https://rpc2.sepolia.org",
+      chainId: 11155111,
+      accounts: [privateKey]
+    },
     mainnet: {
       url: "https://bsc-dataseed1.defibit.io/",//"https://polygon-rpc.com",
       chainId: 56,
@@ -42,8 +47,8 @@ module.exports = {
   etherscan: {
     // Your API key for Etherscan
     // Obtain one at https://bscscan.com/
-    // apiKey: "KK9WGHD5CUJXH2DEVJKV5M47VZDCE6N4WX"
-    apiKey: "UCDP2TXWW1PPZFRAMTUQNS5KGFXPESH5RH" //bsc
+    apiKey: "KK9WGHD5CUJXH2DEVJKV5M47VZDCE6N4WX"
+    // apiKey: "UCDP2TXWW1PPZFRAMTUQNS5KGFXPESH5RH" //bsc
   },
   solidity: {
     compilers: [

@@ -4,6 +4,7 @@ const { MaxUint256, AddressZero, Zero } = constants;
 
 const WETH = "0xb4fbf271143f4fbf7b91a5ded31805e42b2208d6";
 const WBNB = "0xae13d989daC2f0dEbFf460aC112a837C89BAa7cd";
+const WETH_SEPOLIA = "0xD0dF82dE051244f04BfF3A8bB1f62E1cD39eED92";
 
 const overrides = {
     gasLimit: 9999999
@@ -60,11 +61,11 @@ async function main() {
     // // Before deploying, should change 26 line of YocswapLibrary.sol into INIT_CODE_PAIR_HASH.
     // // And then, please deploy the YocswapRouter contract
     const yocswapRouterFactory = await hre.ethers.getContractFactory("YocswapRouter");
-    const yocswapRouterContract = await yocswapRouterFactory.deploy(yocswapContract.address, WETH);
+    const yocswapRouterContract = await yocswapRouterFactory.deploy(yocswapContract.address, WETH_SEPOLIA);
     await yocswapRouterContract.deployed();
     console.log("YocswapRouter Address:", yocswapRouterContract.address);
     await yocswapRouterContract.deployTransaction.wait(5);
-    await contractVerify(yocswapRouterContract.address, 'YocswapRouter', [yocswapContract.address, WETH]);
+    await contractVerify(yocswapRouterContract.address, 'YocswapRouter', [yocswapContract.address, WETH_SEPOLIA]);
     console.log("yocswapRouter Complete!\n\n");
 
     const yocMasterChefFactory = await hre.ethers.getContractFactory("YOCMasterChef");

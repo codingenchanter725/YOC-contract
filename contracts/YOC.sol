@@ -4,6 +4,8 @@
 
 pragma solidity >=0.7.0 <0.9.0;
 
+import "@openzeppelin/contracts/access/Ownable.sol";
+
 // ----------------------------------------------------------------------------
 // ERC Token Standard #20 Interface
 //
@@ -11,23 +13,24 @@ pragma solidity >=0.7.0 <0.9.0;
 interface IERC20 {
     function totalSupply() external view returns (uint256);
 
-    function balanceOf(address tokenOwner)
-        external
-        view
-        returns (uint256 balance);
+    function balanceOf(
+        address tokenOwner
+    ) external view returns (uint256 balance);
 
-    function allowance(address tokenOwner, address spender)
-        external
-        view
-        returns (uint256 remaining);
+    function allowance(
+        address tokenOwner,
+        address spender
+    ) external view returns (uint256 remaining);
 
-    function transfer(address to, uint256 tokens)
-        external
-        returns (bool success);
+    function transfer(
+        address to,
+        uint256 tokens
+    ) external returns (bool success);
 
-    function approve(address spender, uint256 tokens)
-        external
-        returns (bool success);
+    function approve(
+        address spender,
+        uint256 tokens
+    ) external returns (bool success);
 
     function transferFrom(
         address from,
@@ -68,7 +71,7 @@ contract SafeMath {
     }
 }
 
-contract YOC is IERC20, SafeMath {
+contract YOC is IERC20, SafeMath, Ownable {
     // name, symbol, decimals are a part of ERC20 standard, and are OPTIONAL
     string public name;
     string public symbol;
@@ -80,20 +83,26 @@ contract YOC is IERC20, SafeMath {
 
     mapping(address => uint256) balances;
     mapping(address => mapping(address => uint256)) allowed;
+    address public MasterChef;
+
+    event UpdateMasterChef(address masterChefAddress);
 
     /**
      * Constrctor function
      *
      * Initializes contract with initial supply tokens to the creator of the contract
      */
-    constructor() {
-        name = "YOC-FoundersCoin";
-        symbol = "YOC";
-
-        // e.g. 6, means to divide the token amount by 1000000 to get its user representation
-        decimals = 18;
-
-        _totalSupply = 100000000000000000000000000 * (10 ** 18);
+    constructor(
+        string memory _name,
+        string memory _symbol,
+        uint8 _decimals,
+        uint256 __totalSupply
+    ) {
+        // YOC-Funderation, YOCe, 16, 1000000000000000 * 10 ** 16
+        name = _name;
+        symbol = _symbol;
+        decimals = _decimals;
+        _totalSupply = __totalSupply;
 
         balances[msg.sender] = _totalSupply;
         emit Transfer(address(0), msg.sender, _totalSupply);
@@ -105,22 +114,17 @@ contract YOC is IERC20, SafeMath {
     }
 
     // Returns the account balance of the address provided
-    function balanceOf(address tokenOwner)
-        external
-        view
-        override
-        returns (uint256 balance)
-    {
+    function balanceOf(
+        address tokenOwner
+    ) external view override returns (uint256 balance) {
         return balances[tokenOwner];
     }
 
     // Returns the amount which spender is still allowed to withdraw from my balance
-    function allowance(address tokenOwner, address spender)
-        external
-        view
-        override
-        returns (uint256 remaining)
-    {
+    function allowance(
+        address tokenOwner,
+        address spender
+    ) external view override returns (uint256 remaining) {
         return allowed[tokenOwner][spender];
     }
 
@@ -130,11 +134,10 @@ contract YOC is IERC20, SafeMath {
         For example: "Alice approves Uniswap to pull 100 USDT from her wallet." 
         And Uniswap is programed to take her USDT only at the moment when she's buying some other tokens against USDT.
     */
-    function approve(address spender, uint256 tokens)
-        external
-        override
-        returns (bool success)
-    {
+    function approve(
+        address spender,
+        uint256 tokens
+    ) external override returns (bool success) {
         // I as a msg.sender approve spender address these many tokens to use
         allowed[msg.sender][spender] = tokens;
         emit Approval(msg.sender, spender, tokens);
@@ -147,11 +150,10 @@ contract YOC is IERC20, SafeMath {
         Should throw error if caller's account balance doesn't have enough tokens
         Transfer of 0 should also be treated as a normal transaction
     */
-    function transfer(address to, uint256 tokens)
-        external
-        override
-        returns (bool success)
-    {
+    function transfer(
+        address to,
+        uint256 tokens
+    ) external override returns (bool success) {
         // Subtract tokens from callers balance
         balances[msg.sender] = safeSub(balances[msg.sender], tokens);
 
@@ -188,6 +190,14 @@ contract YOC is IERC20, SafeMath {
         emit Transfer(from, to, tokens);
 
         // Return true to say function worked successfully
+        return true;
+    }
+
+    function setMasterChef(
+        address masterChefAddress
+    ) external onlyOwner returns (bool success) {
+        MasterChef = masterChefAddress;
+        emit UpdateMasterChef(masterChefAddress);
         return true;
     }
 }
