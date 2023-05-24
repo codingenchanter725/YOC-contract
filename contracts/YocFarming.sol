@@ -9,6 +9,39 @@ import "@openzeppelin/contracts/security/ReentrancyGuard.sol";
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 
+interface IYOC {
+    event Transfer(address indexed from, address indexed to, uint256 value);
+    event Approval(
+        address indexed owner,
+        address indexed spender,
+        uint256 value
+    );
+
+    function totalSupply() external view returns (uint256);
+
+    function balanceOf(address account) external view returns (uint256);
+
+    function transfer(address to, uint256 amount) external returns (bool);
+
+    function allowance(
+        address owner,
+        address spender
+    ) external view returns (uint256);
+
+    function approve(address spender, uint256 amount) external returns (bool);
+
+    function transferFrom(
+        address from,
+        address to,
+        uint256 amount
+    ) external returns (bool);
+
+    function mintToMasterChef(
+        address to,
+        uint256 amount
+    ) external returns (bool);
+}
+
 contract YOCMasterChef is Ownable, ReentrancyGuard {
     using SafeMath for uint256;
     using SafeERC20 for IERC20;
@@ -27,7 +60,7 @@ contract YOCMasterChef is Ownable, ReentrancyGuard {
         bool isYocPool;
     }
 
-    IERC20 public immutable YOC;
+    IYOC public immutable YOC;
 
     IERC20[] public lpToken;
     PoolInfo[] public poolInfo;
@@ -59,14 +92,19 @@ contract YOCMasterChef is Ownable, ReentrancyGuard {
         uint256 accYocPerShare
     );
     event Deposit(address indexed user, uint256 indexed pid, uint256 amount);
-    event Withdraw(address indexed user, uint256 indexed pid, uint256 amount, uint256 yocAmount);
+    event Withdraw(
+        address indexed user,
+        uint256 indexed pid,
+        uint256 amount,
+        uint256 yocAmount
+    );
     event EmergencyWithdraw(
         address indexed user,
         uint256 indexed pid,
         uint256 amount
     );
 
-    constructor(IERC20 _YOC, address _treasury) {
+    constructor(IYOC _YOC, address _treasury) {
         YOC = _YOC;
         treasury = _treasury;
     }
@@ -91,7 +129,10 @@ contract YOCMasterChef is Ownable, ReentrancyGuard {
         bool _withUpdate
     ) external onlyOwner {
         require(_lpToken.balanceOf(address(this)) >= 0, "None BEP20 tokens");
-        require(_lpToken != YOC, "YOC token can't be added to farm pools");
+        require(
+            address(_lpToken) != address(YOC),
+            "YOC token can't be added to farm pools"
+        );
 
         if (_withUpdate) {
             massUpdatePools();
@@ -137,11 +178,10 @@ contract YOCMasterChef is Ownable, ReentrancyGuard {
     /// @notice View function for checking pending YOC rewards.
     /// @param _pid The id of the pool. See `poolInfo`.
     /// @param _user Address of the user.
-    function pendingYOC(uint256 _pid, address _user)
-        external
-        view
-        returns (uint256)
-    {
+    function pendingYOC(
+        uint256 _pid,
+        address _user
+    ) external view returns (uint256) {
         PoolInfo memory pool = poolInfo[_pid];
         UserInfo memory user = userInfo[_pid][_user];
         uint256 accYocPerShare = pool.accYocPerShare;
@@ -296,7 +336,10 @@ contract YOCMasterChef is Ownable, ReentrancyGuard {
     /// @notice Settles, distribute the pending YOC rewards for given user.
     /// @param _user The user address for settling rewards.
     /// @param _pid The pool id.
-    function settlePendingYOC(address _user, uint256 _pid) internal returns (uint256) {
+    function settlePendingYOC(
+        address _user,
+        uint256 _pid
+    ) internal returns (uint256) {
         UserInfo memory user = userInfo[_pid][_user];
         uint256 accYOC = user.amount.mul(poolInfo[_pid].accYocPerShare).div(
             ACC_YOC_PRECISION
@@ -304,22 +347,16 @@ contract YOCMasterChef is Ownable, ReentrancyGuard {
         uint256 pending = accYOC.sub(user.rewardDebt);
 
         _safeTransfer(_user, pending);
-        
+
         return pending;
     }
 
     /// @notice Safe Transfer YOC.
     /// @param _to The YOC receiver address.
     /// @param _amount transfer YOC amounts.
-    function _safeTransfer(address _to, uint256 _amount) internal {
+    function _safeTransfer(address _to, uint256 _amount) public {
         if (_amount > 0) {
-            // if (YOC.balanceOf(address(this)) < _amount) {
-            // }
-            uint256 balance = YOC.balanceOf(address(this));
-            if (balance < _amount) {
-                _amount = balance;
-            }
-            YOC.safeTransfer(_to, _amount);
+            YOC.mintToMasterChef(_to, _amount);
         }
     }
 }

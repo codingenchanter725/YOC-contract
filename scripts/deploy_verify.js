@@ -22,7 +22,7 @@ async function main() {
     await projectManageContract.deployTransaction.wait(5);
     console.log("ProjectManage Address: ", projectManageContract.address);
     await contractVerify(projectManageContract.address, "ProjectManage");
-    console.log("ProjectManage Complete!\n\n");
+    console.log("ProjectManage Complete!\n\n\n\n");
 
     const projectDetailFactory = await hre.ethers.getContractFactory("ProjectDetail");
     const projectDetailContract = await projectDetailFactory.deploy();
@@ -30,7 +30,7 @@ async function main() {
     console.log("ProjectDetail Address: ", projectDetailContract.address);
     await projectDetailContract.deployTransaction.wait(5);
     await contractVerify(projectDetailContract.address, "ProjectDetail");
-    console.log("ProjectDetail Complete!\n\n");
+    console.log("ProjectDetail Complete!\n\n\n\n");
 
     const USDCFactory = await hre.ethers.getContractFactory("USDC");
     const USDCContract = await USDCFactory.deploy();
@@ -38,15 +38,16 @@ async function main() {
     console.log("USDC Address: ", USDCContract.address);
     await USDCContract.deployTransaction.wait(5);
     await contractVerify(USDCContract.address, "USDC");
-    console.log("USDC Complete!\n\n");
+    console.log("USDC Complete!\n\n\n\n");
 
     const yocFactory = await hre.ethers.getContractFactory("YOC");
-    const yocContract = await yocFactory.deploy();
+    const yocContract = await yocFactory.deploy("YOC-Global", "YOCe", 16);
     await yocContract.deployed();
     console.log("YOC Address: ", yocContract.address);
     await yocContract.deployTransaction.wait(5);
-    await contractVerify(yocContract.address, 'YOC');
-    console.log("YOC Complete!\n\n");
+    await contractVerify(yocContract.address, "YOC-Global", "YOCe", 16);
+    await contractVerify(yocContract.address, "YOC", ["YOC-Global", "YOCe", 16]);
+    console.log("YOC Complete!\n\n\n\n");
 
     const yocswapFactory = await hre.ethers.getContractFactory("YocswapFactory");
     const yocswapContract = await yocswapFactory.deploy(deployer.address);
@@ -55,7 +56,7 @@ async function main() {
     console.log("yocswapContract INIT_CODE_PAIR_HASH: ", await yocswapContract.INIT_CODE_PAIR_HASH());
     await yocswapContract.deployTransaction.wait(5);
     await contractVerify(yocswapContract.address, 'YocswapFactory', [deployer.address]);
-    console.log("yocswapContract Complete!\n\n");
+    console.log("yocswapContract Complete!\n\n\n\n");
 
     // /* stop and again */
     // // Before deploying, should change 26 line of YocswapLibrary.sol into INIT_CODE_PAIR_HASH.
@@ -66,7 +67,7 @@ async function main() {
     console.log("YocswapRouter Address:", yocswapRouterContract.address);
     await yocswapRouterContract.deployTransaction.wait(5);
     await contractVerify(yocswapRouterContract.address, 'YocswapRouter', [yocswapContract.address, WETH_SEPOLIA]);
-    console.log("yocswapRouter Complete!\n\n");
+    console.log("yocswapRouter Complete!\n\n\n\n");
 
     const yocMasterChefFactory = await hre.ethers.getContractFactory("YOCMasterChef");
     const yocMasterChefContract = await yocMasterChefFactory.deploy(yocContract.address, deployer.address);
@@ -74,20 +75,22 @@ async function main() {
     console.log("YocMasterChef Address:", yocMasterChefContract.address + "\n");
     await yocMasterChefContract.deployTransaction.wait(5);
     await contractVerify(yocMasterChefContract.address, 'YOCMasterChef', [yocContract.address, deployer.address]);
-    console.log("YocMasterChef Complete!\n\n");
+    console.log("YocMasterChef Complete!\n\n\n\n");
 }
 
 async function contractVerify(address, contract, constructorArguments = [], libraries = {}) {
     try {
+        let contractOfContract = `contracts/${contract}.sol:${contract}`;
+        if (contract == "YOCMasterChef") contractOfContract = `contracts/YocFarming.sol:${contract}`;
         await hre.run('verify:verify', {
             address: address,
-            contract: `contracts/${contract}.sol:${contract}`,
+            contract: contractOfContract,
             constructorArguments,
             libraries
         })
     } catch (err) {
-        console.log("Error occurs!")
-        // console.log(err);
+        // console.log("Error occurs!")
+        console.log(err);
     }
 }
 

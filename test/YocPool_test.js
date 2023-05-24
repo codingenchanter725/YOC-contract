@@ -36,14 +36,14 @@ describe("YOC Farming Test", function() {
             wallet0, wallet1, wallet2
         ] = await ethers.getSigners()
 
-        const _YOC = await ethers.getContractFactory("BEP20Token")
-        YOC = await _YOC.deploy()
+        const _YOC = await ethers.getContractFactory("YOC")
+        YOC = await _YOC.deploy("YOC", "YOC", 18);
 
-        const _normalLPToken = await ethers.getContractFactory("TestToken")
+        const _normalLPToken = await ethers.getContractFactory("@openzeppelin/contracts/token/ERC20/ERC20.sol:ERC20")
         normalLPToken = await _normalLPToken.deploy("BUSD-WETH pair", "BUSD-WETH")
-        const _yocLPToken = await ethers.getContractFactory("TestToken")
+        const _yocLPToken = await ethers.getContractFactory("@openzeppelin/contracts/token/ERC20/ERC20.sol:ERC20")
         yocLPToken = await _yocLPToken.deploy("YOC-WETH pair", "YOC-WETH")
-        const _dummyToken = await ethers.getContractFactory("TestToken")
+        const _dummyToken = await ethers.getContractFactory("@openzeppelin/contracts/token/ERC20/ERC20.sol:ERC20")
         dummyToken = await _dummyToken.deploy("Dummy Token", "Dummy")
 
         const _yocFarmingContract = await ethers.getContractFactory("YOCMasterChef")
@@ -65,7 +65,7 @@ describe("YOC Farming Test", function() {
             { ...overrides }
         )
 
-        const _yocPool = await ethers.getContractFactory("YocPool")
+        const _yocPool = await ethers.getContractFactory("YocStaking")
         yocPool = await _yocPool.deploy(
             YOC.address,
             yocFarmingContract.address,

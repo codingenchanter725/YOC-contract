@@ -10,15 +10,15 @@ interface IYOCMasterChef {
 
     function withdraw(uint256 _pid, uint256 _amount) external;
 
-    function pendingYOC(uint256 _pid, address _user)
-        external
-        view
-        returns (uint256);
+    function pendingYOC(
+        uint256 _pid,
+        address _user
+    ) external view returns (uint256);
 
-    function userInfo(uint256 _pid, address _user)
-        external
-        view
-        returns (uint256, uint256);
+    function userInfo(
+        uint256 _pid,
+        address _user
+    ) external view returns (uint256, uint256);
 
     function emergencyWithdraw(uint256 _pid) external;
 }
@@ -128,7 +128,7 @@ contract YocStaking is Ownable, Pausable {
     function pendingReward(address _user) external view returns (uint256) {
         UserInfo memory user = userInfo[_user];
         uint256 pendingYocReward = calculateTotalPendingYOCRewards();
-        return pendingYocReward * user.shares / totalShares;
+        return (pendingYocReward * user.shares) / totalShares;
     }
 
     /**
@@ -361,10 +361,9 @@ contract YocStaking is Ownable, Pausable {
      * @notice Set withdraw fee period
      * @dev Only callable by the contract admin.
      */
-    function setWithdrawFeePeriod(uint256 _withdrawFeePeriod)
-        external
-        onlyAdmin
-    {
+    function setWithdrawFeePeriod(
+        uint256 _withdrawFeePeriod
+    ) external onlyAdmin {
         require(
             _withdrawFeePeriod <= MAX_WITHDRAW_FEE_PERIOD,
             "withdrawFeePeriod cannot be more than MAX_WITHDRAW_FEE_PERIOD"

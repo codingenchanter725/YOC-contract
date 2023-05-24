@@ -35,7 +35,7 @@ async function main() {
     console.log("USDC Address: ", USDCFactory.address);
 
     const _yocFactory = await ethers.getContractFactory("YOC");
-    const yocFactory = await _yocFactory.deploy();
+    const yocFactory = await _yocFactory.deploy("YOC", "YOCe", 16);
     await yocFactory.deployed();
     console.log("YOC Address: ", yocFactory.address);
 
@@ -80,7 +80,7 @@ async function main() {
         yocMasterChef.address, // yocMasterChef.address
         deployer.address, // admin
         deployer.address, // fee address
-        pairID,
+        pairID - 1,
         true,
     );
     await yocStakingPool.deployed();
@@ -117,7 +117,7 @@ async function main() {
             yocFactory.address, // yoc
             yocMasterChef.address, // yocMasterChef.address
             deployer.address, // treasury address
-            pairID,
+            pairID - 1,
         );
         await tokenStakingPool.deployed();
         console.log("TokenStakingPool Address:", tokenStakingPool.address);

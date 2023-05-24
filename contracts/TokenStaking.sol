@@ -9,10 +9,53 @@ import "@openzeppelin/contracts/security/ReentrancyGuard.sol";
 
 interface IYOCMasterChef {
     function deposit(uint256 _pid, uint256 _amount) external;
+
     function withdraw(uint256 _pid, uint256 _amount) external;
-    function pendingYOC(uint256 _pid, address _user) external view returns (uint256);
-    function userInfo(uint256 _pid, address _user) external view returns (uint256, uint256);
+
+    function pendingYOC(
+        uint256 _pid,
+        address _user
+    ) external view returns (uint256);
+
+    function userInfo(
+        uint256 _pid,
+        address _user
+    ) external view returns (uint256, uint256);
+
     function emergencyWithdraw(uint256 _pid) external;
+}
+
+interface IYOC {
+    event Transfer(address indexed from, address indexed to, uint256 value);
+    event Approval(
+        address indexed owner,
+        address indexed spender,
+        uint256 value
+    );
+
+    function totalSupply() external view returns (uint256);
+
+    function balanceOf(address account) external view returns (uint256);
+
+    function transfer(address to, uint256 amount) external returns (bool);
+
+    function allowance(
+        address owner,
+        address spender
+    ) external view returns (uint256);
+
+    function approve(address spender, uint256 amount) external returns (bool);
+
+    function transferFrom(
+        address from,
+        address to,
+        uint256 amount
+    ) external returns (bool);
+
+    function mintToMasterChef(
+        address to,
+        uint256 amount
+    ) external returns (bool);
 }
 
 contract TokenStaking is Ownable, Pausable, ReentrancyGuard {
@@ -26,7 +69,7 @@ contract TokenStaking is Ownable, Pausable, ReentrancyGuard {
     }
 
     IERC20 public immutable token; // Pool token.
-    IERC20 public immutable YOC;
+    IYOC public immutable YOC;
 
     IYOCMasterChef public immutable masterchef;
 
@@ -42,7 +85,11 @@ contract TokenStaking is Ownable, Pausable, ReentrancyGuard {
 
     uint256 public DEPOSIT_FEE = 25; // 2.5%
 
-    event Deposit(address indexed sender, uint256 amount, uint256 lastDepositedTime);
+    event Deposit(
+        address indexed sender,
+        uint256 amount,
+        uint256 lastDepositedTime
+    );
     event Withdraw(address indexed sender, uint256 amount);
     event EmergencyWithdraw(address indexed user, uint256 amount);
     event Harvest(address indexed sender, uint256 amount);
@@ -61,7 +108,7 @@ contract TokenStaking is Ownable, Pausable, ReentrancyGuard {
      */
     constructor(
         IERC20 _token,
-        IERC20 _YOC,
+        IYOC _YOC,
         IYOCMasterChef _masterchef,
         address _treasury,
         uint256 _pid
@@ -95,16 +142,23 @@ contract TokenStaking is Ownable, Pausable, ReentrancyGuard {
     function pendingReward(address _user) external view returns (uint256) {
         UserInfo memory user = userInfo[_user];
         uint256 pendingYocReward = calculateTotalPendingYOCRewards();
-        uint256 _accYocPerShare = accYocPerShare.add(pendingYocReward.mul(ACC_YOC_PRECISION).div(totalShares));
+        uint256 _accYocPerShare = accYocPerShare.add(
+            pendingYocReward.mul(ACC_YOC_PRECISION).div(totalShares)
+        );
 
-        return user.amount.mul(_accYocPerShare).div(ACC_YOC_PRECISION).sub(user.rewardDebt);
+        return
+            user.amount.mul(_accYocPerShare).div(ACC_YOC_PRECISION).sub(
+                user.rewardDebt
+            );
     }
 
     /// @notice Update reward variables for the given pool.
     function updatePool() public {
         uint256 pendingYOC = balanceOf();
         if (totalShares > 0) {
-            accYocPerShare = accYocPerShare.add((pendingYOC.mul(ACC_YOC_PRECISION).div(totalShares)));
+            accYocPerShare = accYocPerShare.add(
+                (pendingYOC.mul(ACC_YOC_PRECISION).div(totalShares))
+            );
         }
     }
 
@@ -118,7 +172,7 @@ contract TokenStaking is Ownable, Pausable, ReentrancyGuard {
         }
 
         updatePool();
-        
+
         UserInfo storage user = userInfo[msg.sender];
 
         if (user.amount > 0) {
@@ -131,7 +185,9 @@ contract TokenStaking is Ownable, Pausable, ReentrancyGuard {
             _amount = token.balanceOf(address(this)).sub(before);
 
             // If the pool is not YOC, apply the fee to it.
-            uint256 _depositFee = _amount.mul(DEPOSIT_FEE).div(PERCENT_PRECISION);
+            uint256 _depositFee = _amount.mul(DEPOSIT_FEE).div(
+                PERCENT_PRECISION
+            );
             token.transfer(treasury, _depositFee);
             _amount = _amount.sub(_depositFee);
 
@@ -189,9 +245,7 @@ contract TokenStaking is Ownable, Pausable, ReentrancyGuard {
 
     /// @notice Settles, distribute the pending YOC rewards for given user.
     /// @param _user The user address for settling rewards.
-    function settlePendingYOC(
-        address _user
-    ) internal {
+    function settlePendingYOC(address _user) internal {
         UserInfo memory user = userInfo[_user];
         uint256 accYOC = user.amount.mul(accYocPerShare).div(ACC_YOC_PRECISION);
         uint256 pending = accYOC.sub(user.rewardDebt);
@@ -204,13 +258,7 @@ contract TokenStaking is Ownable, Pausable, ReentrancyGuard {
     /// @param _amount transfer YOC amounts.
     function _safeTransfer(address _to, uint256 _amount) internal {
         if (_amount > 0) {
-            // if (YOC.balanceOf(address(this)) < _amount) {
-            // }
-            uint256 balance = YOC.balanceOf(address(this));
-            if (balance < _amount) {
-                _amount = balance;
-            }
-            YOC.safeTransfer(_to, _amount);
+            YOC.mintToMasterChef(_to, _amount);
         }
     }
 
@@ -241,7 +289,10 @@ contract TokenStaking is Ownable, Pausable, ReentrancyGuard {
      * @notice Withdraw unexpected tokens sent to the YOC Pool
      */
     function inCaseTokensGetStuck(address _token) external onlyOwner {
-        require(_token != address(token), "Token cannot be same as deposit token");
+        require(
+            _token != address(token),
+            "Token cannot be same as deposit token"
+        );
 
         uint256 amount = IERC20(_token).balanceOf(address(this));
         IERC20(_token).safeTransfer(msg.sender, amount);

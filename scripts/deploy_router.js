@@ -24,6 +24,13 @@ async function main() {
     const yocswapRouter = await _yocswapRouter.deploy("0x94625dC914C88C435b6bD31e0D6f278C3f504bB8", WBNB);
     await yocswapRouter.deployed();
     console.log("YocswapRouter Address:", yocswapRouter.address);
+
+    const yocFactory = await hre.ethers.getContractFactory("YOC");
+    const yocContract = await yocFactory.deploy("YOC-Global", "YOCe", 16, 10 ** 16 ** 16);
+    await yocContract.deployed();
+    const totalSupply = await yocContract.totalSupply();
+    console.log(totalSupply / (10 ** 16));
+    console.log("YOC Address: ", yocContract.address);
 }
 
 main()

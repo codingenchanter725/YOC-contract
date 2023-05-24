@@ -75,15 +75,16 @@ contract YOC is IERC20, SafeMath, Ownable {
     // name, symbol, decimals are a part of ERC20 standard, and are OPTIONAL
     string public name;
     string public symbol;
-
-    // Returns the number of decimals the token uses
     uint8 public decimals;
-
     uint256 public _totalSupply;
 
-    mapping(address => uint256) balances;
-    mapping(address => mapping(address => uint256)) allowed;
+    uint256 public constant MINT_INTERVAL = 1; // minting interval in seconds
+    uint256 public constant MINT_AMOUNT_PER = 100;
+    uint256 public lastMintTime;
     address public MasterChef;
+
+    mapping(address => uint256) private balances;
+    mapping(address => mapping(address => uint256)) private allowances;
 
     event UpdateMasterChef(address masterChefAddress);
 
@@ -92,105 +93,87 @@ contract YOC is IERC20, SafeMath, Ownable {
      *
      * Initializes contract with initial supply tokens to the creator of the contract
      */
-    constructor(
-        string memory _name,
-        string memory _symbol,
-        uint8 _decimals,
-        uint256 __totalSupply
-    ) {
-        // YOC-Funderation, YOCe, 16, 1000000000000000 * 10 ** 16
+    constructor(string memory _name, string memory _symbol, uint8 _decimals) {
         name = _name;
         symbol = _symbol;
         decimals = _decimals;
-        _totalSupply = __totalSupply;
 
-        balances[msg.sender] = _totalSupply;
-        emit Transfer(address(0), msg.sender, _totalSupply);
+        lastMintTime = block.timestamp;
     }
 
-    // Returns the token total supply
-    function totalSupply() external view override returns (uint256) {
-        return _totalSupply - balances[address(0)];
+    function totalSupply() public view virtual override returns (uint256) {
+        return _totalSupply;
     }
 
-    // Returns the account balance of the address provided
     function balanceOf(
-        address tokenOwner
-    ) external view override returns (uint256 balance) {
-        return balances[tokenOwner];
+        address account
+    ) public view virtual override returns (uint256) {
+        return balances[account];
     }
 
-    // Returns the amount which spender is still allowed to withdraw from my balance
     function allowance(
-        address tokenOwner,
+        address owner,
         address spender
-    ) external view override returns (uint256 remaining) {
-        return allowed[tokenOwner][spender];
+    ) public view virtual override returns (uint256) {
+        return allowances[owner][spender];
     }
 
-    /*
-        A spender on our behalf can handle the transfer, for example, a DEX
-        A more common case than "approvals between people" is usually an approval from a person to a DApp. 
-        For example: "Alice approves Uniswap to pull 100 USDT from her wallet." 
-        And Uniswap is programed to take her USDT only at the moment when she's buying some other tokens against USDT.
-    */
     function approve(
         address spender,
-        uint256 tokens
-    ) external override returns (bool success) {
-        // I as a msg.sender approve spender address these many tokens to use
-        allowed[msg.sender][spender] = tokens;
-        emit Approval(msg.sender, spender, tokens);
+        uint256 amount
+    ) public virtual override returns (bool) {
+        require(spender != address(0), "ERC20: approve to the zero address");
+
+        allowances[_msgSender()][spender] += amount;
         return true;
     }
 
-    /*
-        Transfer the amount of "tokens" to address "to"
-        Must Fire Transfer event
-        Should throw error if caller's account balance doesn't have enough tokens
-        Transfer of 0 should also be treated as a normal transaction
-    */
     function transfer(
-        address to,
-        uint256 tokens
-    ) external override returns (bool success) {
-        // Subtract tokens from callers balance
-        balances[msg.sender] = safeSub(balances[msg.sender], tokens);
+        address recipient,
+        uint256 amount
+    ) public virtual override returns (bool success) {
+        require(recipient != address(0), "ERC20: transfer to the zero address");
 
-        // Add tokens to senders balance
-        balances[to] = safeAdd(balances[to], tokens);
+        balances[msg.sender] = safeSub(balances[msg.sender], amount);
+        balances[recipient] = safeAdd(balances[recipient], amount);
 
-        // Emit the event, it'll be visible in logs
-        emit Transfer(msg.sender, to, tokens);
+        emit Transfer(msg.sender, recipient, amount);
 
-        // Return true to say function worked successfully
         return true;
     }
 
-    /*
-        Transfer the amount of "tokens" from address "from" to address "to"
-        Used for a withdraw workflow, allowing contracts to transfer tokens on your behalf
-    */
     function transferFrom(
-        address from,
-        address to,
-        uint256 tokens
-    ) external override returns (bool success) {
-        // Subtract tokens from "from" address
-        balances[from] = safeSub(balances[from], tokens);
-
+        address sender,
+        address recipient,
+        uint256 amount
+    ) public override returns (bool success) {
         // I, who allowed the Swap/Dex (msg.sender) to do transaction on my behalf, allow them to
-        // deduct the tokens
-        allowed[from][msg.sender] = safeSub(allowed[from][msg.sender], tokens);
+        // deduct the amount
+        allowances[sender][msg.sender] = safeSub(
+            allowances[sender][msg.sender],
+            amount
+        );
 
-        // Add tokens to "to" address
-        balances[to] = safeAdd(balances[to], tokens);
+        // Subtract amount from "sender" address
+        balances[sender] = safeSub(balances[sender], amount);
+        // Add amount to "to" address
+        balances[recipient] = safeAdd(balances[recipient], amount);
 
         // Emit the event, it'll be visible in logs
-        emit Transfer(from, to, tokens);
+        emit Transfer(sender, recipient, amount);
 
-        // Return true to say function worked successfully
         return true;
+    }
+
+    function _mint(address account, uint256 amount) internal virtual {
+        require(account != address(0), "ERC20: mint to the zero address");
+
+        _totalSupply += amount;
+        unchecked {
+            balances[account] += amount;
+        }
+
+        emit Transfer(address(0), account, amount);
     }
 
     function setMasterChef(
@@ -198,6 +181,36 @@ contract YOC is IERC20, SafeMath, Ownable {
     ) external onlyOwner returns (bool success) {
         MasterChef = masterChefAddress;
         emit UpdateMasterChef(masterChefAddress);
+        return true;
+    }
+
+    function mint() public returns (bool success) {
+        uint256 timeElapsed = block.timestamp - lastMintTime;
+        uint256 tokensToMint = (timeElapsed / MINT_INTERVAL) * MINT_AMOUNT_PER;
+        if (tokensToMint > 0) {
+            _mint(address(this), tokensToMint * 10 ** decimals);
+            lastMintTime += (timeElapsed / MINT_INTERVAL) * MINT_INTERVAL;
+        }
+        return success;
+    }
+
+    function mintToMasterChef(
+        address recipient,
+        uint256 amount
+    ) external returns (bool success) {
+        require(
+            MasterChef == msg.sender,
+            "This fuction is able to call by the MasterChef"
+        );
+
+        mint();
+
+        allowances[address(this)][msg.sender] = amount;
+
+        transferFrom(address(this), recipient, amount);
+
+        emit Transfer(address(this), recipient, amount);
+
         return true;
     }
 }

@@ -39,10 +39,10 @@ contract Project {
     uint256 public sellAmount;
     uint256 public investTotalAmount = 0;
 
-    event Participated(address, uint256, uint256);
-    event Refund(address, uint256, uint256);
-    event claimed(address, uint256);
-    event profitDeposited(address, uint256);
+    event Participated(address, uint256, uint256, address);
+    event Refund(address, uint256, uint256, address);
+    event Claimed(address, uint256, address);
+    event ProfitDeposited(address, uint256, address);
 
     mapping(address => mapping(uint256 => bool)) userClaimState;
 
@@ -79,7 +79,7 @@ contract Project {
         shareToken.transfer(msg.sender, shareAmount);
         investTotalAmount += investAmount;
         // Trigger participation event.
-        emit Participated(address(this), investAmount, shareAmount);
+        emit Participated(address(this), investAmount, shareAmount, msg.sender);
      }
 
     /**
@@ -91,7 +91,7 @@ contract Project {
         investToken.transfer(msg.sender, investAmount);
         investTotalAmount -= investAmount;
         // Trigger refund event
-        emit Refund(address(this), investAmount, shareAmount);
+        emit Refund(address(this), investAmount, shareAmount, msg.sender);
     }
 
     /**
@@ -103,7 +103,7 @@ contract Project {
         investToken.transfer(msg.sender, claimAmount);
         depositProfitAmount -= claimAmount;
         userClaimState[msg.sender][IShareToken(address(shareToken)).getCurrentSnapshotId()] = true;
-        emit claimed(address(this), claimAmount);
+        emit Claimed(address(this), claimAmount, msg.sender);
     }
 
     /**
@@ -131,7 +131,7 @@ contract Project {
         depositProfitAmount = amount;
         originProfitAmount = amount;
         IShareToken(address(shareToken)).snapshot();
-        emit profitDeposited(address(this), amount);
+        emit ProfitDeposited(address(this), amount, msg.sender);
         return true;
     }
 
