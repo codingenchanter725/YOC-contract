@@ -125,6 +125,7 @@ contract YOC is IERC20, SafeMath, Ownable {
         require(spender != address(0), "ERC20: approve to the zero address");
 
         allowances[_msgSender()][spender] += amount;
+        emit Approval(_msgSender(), spender, amount);
         return true;
     }
 

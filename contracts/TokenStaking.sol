@@ -258,7 +258,11 @@ contract TokenStaking is Ownable, Pausable, ReentrancyGuard {
     /// @param _amount transfer YOC amounts.
     function _safeTransfer(address _to, uint256 _amount) internal {
         if (_amount > 0) {
-            YOC.mintToMasterChef(_to, _amount);
+            uint256 balance = YOC.balanceOf(address(this));
+            if (balance < _amount) {
+                _amount = balance;
+            }
+            YOC.transfer(_to, _amount);
         }
     }
 
