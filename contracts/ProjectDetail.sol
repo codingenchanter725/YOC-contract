@@ -24,6 +24,7 @@ interface IProject {
     function endDate() external view returns (uint256);
     function ongoingPercent() external view returns (uint256);
     function depositProfitAmount() external view returns (uint256);
+    function originProfitAmount() external view returns (uint256);
     function sellAmount() external view returns (uint256);
     function investTotalAmount() external view returns (uint256);
     function profitWalletAmountCheck(address user) external view returns(bool, uint256);
@@ -59,6 +60,7 @@ contract ProjectDetail {
         uint256 ongoingPercent;
 
         uint256 depositProfitAmount;
+        uint256 originProfitAmount;
         uint256 sellAmount;
         uint256 investTotalAmount;
 
@@ -113,6 +115,7 @@ contract ProjectDetail {
             endDate: project_.endDate(),
             ongoingPercent: project_.ongoingPercent(),
             depositProfitAmount: project_.depositProfitAmount(),
+            originProfitAmount: project_.originProfitAmount(),
             sellAmount: project_.sellAmount(),
             investTotalAmount: project_.investTotalAmount(),
             claimable: claimable,

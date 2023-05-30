@@ -81,12 +81,10 @@ contract YOC is IERC20, SafeMath, Ownable {
     uint256 public constant MINT_INTERVAL = 1; // minting interval in seconds
     uint256 public constant MINT_AMOUNT_PER = 100;
     uint256 public lastMintTime;
-    address public MasterChef;
+    mapping(address => bool) public isAddressForTransferToThere;
 
     mapping(address => uint256) private balances;
     mapping(address => mapping(address => uint256)) private allowances;
-
-    event UpdateMasterChef(address masterChefAddress);
 
     /**
      * Constrctor function
@@ -177,11 +175,11 @@ contract YOC is IERC20, SafeMath, Ownable {
         emit Transfer(address(0), account, amount);
     }
 
-    function setMasterChef(
-        address masterChefAddress
+    function setAddressForTransferToThere(
+        address _address,
+        bool value
     ) external onlyOwner returns (bool success) {
-        MasterChef = masterChefAddress;
-        emit UpdateMasterChef(masterChefAddress);
+        isAddressForTransferToThere[_address] = value;
         return true;
     }
 
@@ -195,13 +193,12 @@ contract YOC is IERC20, SafeMath, Ownable {
         return success;
     }
 
-    function mintToMasterChef(
+    function mintAndTransferToThere(
         address recipient,
         uint256 amount
     ) external returns (bool success) {
         require(
-            MasterChef == msg.sender,
-            "This fuction is able to call by the MasterChef"
+            isAddressForTransferToThere[msg.sender] == true, "This fuction is able to call by the MasterChef"
         );
 
         mint();

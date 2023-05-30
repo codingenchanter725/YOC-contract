@@ -36,7 +36,7 @@ interface IYOC {
         uint256 amount
     ) external returns (bool);
 
-    function mintToMasterChef(
+    function mintAndTransferToThere(
         address to,
         uint256 amount
     ) external returns (bool);
@@ -356,7 +356,7 @@ contract YOCMasterChef is Ownable, ReentrancyGuard {
     /// @param _amount transfer YOC amounts.
     function _safeTransfer(address _to, uint256 _amount) public {
         if (_amount > 0) {
-            YOC.mintToMasterChef(_to, _amount);
+            YOC.mintAndTransferToThere(_to, _amount);
         }
     }
 }

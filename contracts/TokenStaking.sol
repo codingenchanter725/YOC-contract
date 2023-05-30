@@ -25,39 +25,6 @@ interface IYOCMasterChef {
     function emergencyWithdraw(uint256 _pid) external;
 }
 
-interface IYOC {
-    event Transfer(address indexed from, address indexed to, uint256 value);
-    event Approval(
-        address indexed owner,
-        address indexed spender,
-        uint256 value
-    );
-
-    function totalSupply() external view returns (uint256);
-
-    function balanceOf(address account) external view returns (uint256);
-
-    function transfer(address to, uint256 amount) external returns (bool);
-
-    function allowance(
-        address owner,
-        address spender
-    ) external view returns (uint256);
-
-    function approve(address spender, uint256 amount) external returns (bool);
-
-    function transferFrom(
-        address from,
-        address to,
-        uint256 amount
-    ) external returns (bool);
-
-    function mintToMasterChef(
-        address to,
-        uint256 amount
-    ) external returns (bool);
-}
-
 contract TokenStaking is Ownable, Pausable, ReentrancyGuard {
     using SafeMath for uint256;
     using SafeERC20 for IERC20;
@@ -69,7 +36,7 @@ contract TokenStaking is Ownable, Pausable, ReentrancyGuard {
     }
 
     IERC20 public immutable token; // Pool token.
-    IYOC public immutable YOC;
+    IERC20 public immutable YOC;
 
     IYOCMasterChef public immutable masterchef;
 
@@ -108,7 +75,7 @@ contract TokenStaking is Ownable, Pausable, ReentrancyGuard {
      */
     constructor(
         IERC20 _token,
-        IYOC _YOC,
+        IERC20 _YOC,
         IYOCMasterChef _masterchef,
         address _treasury,
         uint256 _pid
