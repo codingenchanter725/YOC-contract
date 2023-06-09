@@ -16,7 +16,7 @@ module.exports = {
     hardhat: {
       forking: {
         url: "https://goerli.infura.io/v3/9aa3d95b3bc440fa88ea12eaa4456161",
-        blockNumber: 9080088
+        blockNumber: 9145061
       },
     },
     testnet: {

@@ -15,8 +15,10 @@ contract YocswapRouter is IYocswapRouter02 {
     address public immutable override factory;
     address public immutable override WETH;
 
-    event AddLiquidity(address tokenA, uint256 amountA, address tokenB, uint256 amountB, address pair, uint256 liquidity);
-    event RemoveLiquidity(address tokenA, uint256 amountA, address tokenB, uint256 amountB, address pair);
+    event AddLiquidity(address[] addresses, uint256[] amounts);
+    event RemoveLiquidity(address[] addresses, uint256[] amounts);
+    // event AddLiquidity(address tokenA, uint256 amountA, address tokenB, uint256 amountB, address pair, uint256 liquidity, address user);
+    // event RemoveLiquidity(address tokenA, uint256 amountA, address tokenB, uint256 amountB, address pair, uint256 liquidity, address user);
 
     modifier ensure(uint256 deadline) {
         require(deadline >= block.timestamp, "YocswapRouter: EXPIRED");
@@ -112,7 +114,20 @@ contract YocswapRouter is IYocswapRouter02 {
         TransferHelper.safeTransferFrom(tokenA, msg.sender, pair, amountA);
         TransferHelper.safeTransferFrom(tokenB, msg.sender, pair, amountB);
         liquidity = IYocswapPair(pair).mint(to);
-        emit AddLiquidity(tokenA, amountA, tokenB, amountB, pair, liquidity);
+
+        address[] memory eventAddresses = new address[](4);
+        eventAddresses[0] = tokenA;
+        eventAddresses[1] = tokenB;
+        eventAddresses[2] = pair;
+        eventAddresses[3] = to;
+        uint256[] memory eventAmounts = new uint256[](3);
+        eventAmounts[0] = amountA;
+        eventAmounts[1] = amountB;
+        eventAmounts[2] = liquidity;
+        emit AddLiquidity(
+            eventAddresses, 
+            eventAmounts
+        );
     }
 
     function addLiquidityETH(
@@ -151,7 +166,19 @@ contract YocswapRouter is IYocswapRouter02 {
         if (msg.value > amountETH)
             TransferHelper.safeTransferETH(msg.sender, msg.value - amountETH);
         
-        emit AddLiquidity(WETH, amountETH, token, amountToken, pair, liquidity);
+        address[] memory eventAddresses = new address[](4);
+        eventAddresses[0] = WETH;
+        eventAddresses[1] = token;
+        eventAddresses[2] = pair;
+        eventAddresses[3] = to;
+        uint256[] memory eventAmounts = new uint256[](3);
+        eventAmounts[0] = amountETH;
+        eventAmounts[1] = amountToken;
+        eventAmounts[2] = liquidity;
+        emit AddLiquidity(
+            eventAddresses, 
+            eventAmounts
+        );
     }
 
     // **** REMOVE LIQUIDITY ****
@@ -180,7 +207,19 @@ contract YocswapRouter is IYocswapRouter02 {
         require(amountA >= amountAMin, "YocswapRouter: INSUFFICIENT_A_AMOUNT");
         require(amountB >= amountBMin, "YocswapRouter: INSUFFICIENT_B_AMOUNT");
 
-        emit RemoveLiquidity(tokenA, amountA, tokenB, amountB, pair);
+        address[] memory eventAddresses = new address[](4);
+        eventAddresses[0] = tokenA;
+        eventAddresses[1] = tokenB;
+        eventAddresses[2] = pair;
+        eventAddresses[3] = to;
+        uint256[] memory eventAmounts = new uint256[](3);
+        eventAmounts[0] = amountA;
+        eventAmounts[1] = amountB;
+        eventAmounts[2] = liquidity;
+        emit RemoveLiquidity(
+            eventAddresses, 
+            eventAmounts
+        );
     }
 
     function removeLiquidityETH(
@@ -210,7 +249,20 @@ contract YocswapRouter is IYocswapRouter02 {
         TransferHelper.safeTransfer(token, to, amountToken);
         IWETH(WETH).withdraw(amountETH);
         TransferHelper.safeTransferETH(to, amountETH);
-        emit RemoveLiquidity(WETH, amountETH, token, amountToken, pair);
+
+        address[] memory eventAddresses = new address[](4);
+        eventAddresses[0] = WETH;
+        eventAddresses[1] = token;
+        eventAddresses[2] = pair;
+        eventAddresses[3] = to;
+        uint256[] memory eventAmounts = new uint256[](3);
+        eventAmounts[0] = amountETH;
+        eventAmounts[1] = amountToken;
+        eventAmounts[2] = liquidity;
+        emit RemoveLiquidity(
+            eventAddresses, 
+            eventAmounts
+        );
     }
 
     function removeLiquidityWithPermit(

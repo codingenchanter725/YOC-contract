@@ -7,6 +7,10 @@ interface IERC20 {
     function sellAmount() external view returns (uint256);
     function balanceOf(address user) external view returns (uint256);
     function name() external view returns (string memory);
+    function allowance(
+        address tokenOwner,
+        address spender
+    ) external view returns (uint256 remaining);
 }
 interface IProject {
     function shareToken() external view returns (IERC20);
@@ -27,7 +31,7 @@ interface IProject {
     function originProfitAmount() external view returns (uint256);
     function sellAmount() external view returns (uint256);
     function investTotalAmount() external view returns (uint256);
-    function profitWalletAmountCheck(address user) external view returns(bool, uint256);
+    function profitWalletAmountCheck(address user) external view returns(bool, uint256, bool);
 }
 
 
@@ -40,10 +44,12 @@ contract ProjectDetail {
         uint256 shareTokenSellAmount;
         uint256 shareTokenBalance;
         uint256 shareTokenBalanceTemp;
+        uint256 shareTokenAllowance;
         
         address investToken;
         uint256 investTokenDecimals;
         uint256 investTokenBalance;
+        uint256 investTokenAllowance;
 
         string title;
         string description;
@@ -66,6 +72,7 @@ contract ProjectDetail {
 
         bool claimable;
         uint256 claimableAmount;
+        bool joinState;
     }
 
     struct TokenDetail {
@@ -86,22 +93,31 @@ contract ProjectDetail {
         uint256 shareTokenBalance = 0;
         uint256 investTokenBalance = 0;
         uint256 claimableAmount = 0;
+        uint256 shareTokenAllowance = 0;
+        uint256 investTokenAllowance = 0;
+        bool joinState = false;
         bool claimable = false;
         if (user_ != address(0)) {
             shareTokenBalance = shareToken.balanceOf(user_);
             investTokenBalance = investToken.balanceOf(user_);
-            (claimable, claimableAmount) = project_.profitWalletAmountCheck(user_);
+            (claimable, claimableAmount, joinState) = project_.profitWalletAmountCheck(user_);
+            shareTokenAllowance = shareToken.allowance(address(user_), address(project_));
+            investTokenAllowance = investToken.allowance(address(user_), address(project_));
         }
+
+        uint256 shareTokenBalanceOfProject = shareToken.balanceOf(address(project_));
 
         Detail memory returnVal = Detail({
             shareToken: address(shareToken),
             shareTokenDecimals: shareToken.decimals(),
             shareTokenSellAmount: shareToken.sellAmount(),
-            shareTokenBalanceTemp: shareToken.balanceOf(address(project_)),
+            shareTokenBalanceTemp: shareTokenBalanceOfProject,
             shareTokenBalance: shareTokenBalance,
+            shareTokenAllowance: shareTokenAllowance,
             investToken: address(investToken),
             investTokenDecimals: investToken.decimals(),
             investTokenBalance: investTokenBalance,
+            investTokenAllowance: investTokenAllowance,
             title: project_.title(),
             description: project_.description(),
             category: project_.category(),
@@ -119,7 +135,8 @@ contract ProjectDetail {
             sellAmount: project_.sellAmount(),
             investTotalAmount: project_.investTotalAmount(),
             claimable: claimable,
-            claimableAmount: claimableAmount
+            claimableAmount: claimableAmount,
+            joinState: joinState
         });
 
         return returnVal;

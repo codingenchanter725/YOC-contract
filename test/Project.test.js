@@ -95,10 +95,10 @@ describe("All Test", async function () {
             console.log(projectAddresses[0]);
         })
 
-        // it("get the details", async () => {
-        //     const details = await projectDetailContract.getProjectDetails(projectAddresses[0], deployer.address);
-        //     console.log(details);
-        // })
+        it("get the details", async () => {
+            const details = await projectDetailContract.getProjectDetails(projectAddresses[0], deployer.address);
+            console.log(details);
+        })
 
         it("BuyToken", async () => {
             const projectFactory = await ethers.getContractFactory("Project");

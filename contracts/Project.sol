@@ -45,6 +45,7 @@ contract Project {
     event ProfitDeposited(address, uint256, address);
 
     mapping(address => mapping(uint256 => bool)) userClaimState;
+    mapping(address => bool) userJoinState;
 
     constructor(string[] memory _infoST, uint256[] memory _infoNB, address[] memory _infoAD, uint256 _sellAmount) {
         title = _infoST[0];
@@ -78,6 +79,7 @@ contract Project {
         investToken.transferFrom(msg.sender, address(this), investAmount);
         shareToken.transfer(msg.sender, shareAmount);
         investTotalAmount += investAmount;
+        userJoinState[msg.sender] = true;
         // Trigger participation event.
         emit Participated(address(this), investAmount, shareAmount, msg.sender);
      }
@@ -98,7 +100,7 @@ contract Project {
      * @notice reward sender's USDC
      */
     function claim() public {
-        (bool claimable, uint256 claimAmount) = profitWalletAmountCheck(msg.sender);
+        (bool claimable, uint256 claimAmount, ) = profitWalletAmountCheck(msg.sender);
         require(!claimable && claimAmount > 0 , "Claim Error!");
         investToken.transfer(msg.sender, claimAmount);
         depositProfitAmount -= claimAmount;
@@ -109,14 +111,14 @@ contract Project {
     /**
      * Check profit wallet
      */
-    function profitWalletAmountCheck(address _userAddr) public view returns(bool, uint256) {
+    function profitWalletAmountCheck(address _userAddr) public view returns(bool, uint256, bool) {
         bool claimable = userClaimState[_userAddr][IShareToken(address(shareToken)).getCurrentSnapshotId()];
         uint256 claimAmount = 0;
         if(!claimable) {
             uint256 userShareAmount = IShareToken(address(shareToken)).balanceOfAt(_userAddr, IShareToken(address(shareToken)).getCurrentSnapshotId());
             claimAmount = (userShareAmount * originProfitAmount)/shareToken.totalSupply();
         }
-        return (claimable, claimAmount);
+        return (claimable, claimAmount, userJoinState[_userAddr]);
     }
 
     /**

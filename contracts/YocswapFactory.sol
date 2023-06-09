@@ -137,7 +137,7 @@ contract YocswapPair is IYocswapPair, YocswapERC20 {
         require(success && (data.length == 0 || abi.decode(data, (bool))), 'Yocswap: TRANSFER_FAILED');
     }
 
-    event Mint(address indexed sender, uint amount0, uint amount1);
+    event Mint(address indexed sender, uint amount0, uint amount1, address indexed to);
     event Burn(address indexed sender, uint amount0, uint amount1, address indexed to);
     event Swap(
         address indexed sender,
@@ -218,7 +218,7 @@ contract YocswapPair is IYocswapPair, YocswapERC20 {
 
         _update(balance0, balance1, _reserve0, _reserve1);
         if (feeOn) kLast = uint(reserve0).mul(reserve1); // reserve0 and reserve1 are up-to-date
-        emit Mint(msg.sender, amount0, amount1);
+        emit Mint(msg.sender, amount0, amount1, to);
     }
 
     // this low-level function should be called from a contract which performs important safety checks
