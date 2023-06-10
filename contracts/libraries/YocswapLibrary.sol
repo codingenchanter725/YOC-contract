@@ -23,7 +23,7 @@ library YocswapLibrary {
                 hex'ff',
                 factory,
                 keccak256(abi.encodePacked(token0, token1)),
-                hex'1c57f956654e581f52dd6918ea3b873bae63ac61838cdde9f0af1e8aadb12a83'
+                hex'bc54739a0b8ece1e8755e4d2177863240eed601e5740d0da847db1e175942c43'
             )))));
     }
 

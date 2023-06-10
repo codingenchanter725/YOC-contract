@@ -29,6 +29,8 @@ describe("Yocswap Test", function () {
 
     const YocswapFactory = await ethers.getContractFactory("YocswapFactory");
     factory = await YocswapFactory.deploy(wallet.address);
+    const INIT_CODE_PAIR_HASH = await factory.INIT_CODE_PAIR_HASH();
+    console.log(INIT_CODE_PAIR_HASH);
   
     const _WETH = await ethers.getContractFactory("WETH");
     WETH = await _WETH.deploy();
@@ -39,7 +41,7 @@ describe("Yocswap Test", function () {
     const RouterEventEmitter = await ethers.getContractFactory("RouterEventEmitter");
     routerEventEmitter = await RouterEventEmitter.deploy();
   
-    const Token = await ethers.getContractFactory("ERC20");
+    const Token = await ethers.getContractFactory("contracts/test/ERC20.sol:ERC20");
     token0 = await Token.deploy("token0", "token0");
     token1 = await Token.deploy("token1", "token1");
 
@@ -99,7 +101,7 @@ describe("Yocswap Test", function () {
       .to.emit(pair, 'Sync')
       .withArgs(token0Amount, token1Amount)
       .to.emit(pair, 'Mint')
-      .withArgs(router.address, token0Amount, token1Amount)
+      .withArgs(router.address, token0Amount, token1Amount, wallet.address)
     expect(await pair.balanceOf(wallet.address)).to.eq(expectedLiquidity.sub(MINIMUM_LIQUIDITY))
   })
 
@@ -134,7 +136,8 @@ describe("Yocswap Test", function () {
       .withArgs(
         router.address,
         WETHPairToken0 === WETHPartner.address ? WETHPartnerAmount : ETHAmount,
-        WETHPairToken0 === WETHPartner.address ? ETHAmount : WETHPartnerAmount
+        WETHPairToken0 === WETHPartner.address ? ETHAmount : WETHPartnerAmount, 
+        wallet.address
       )
 
     expect(await WETHPair.balanceOf(wallet.address)).to.eq(expectedLiquidity.sub(MINIMUM_LIQUIDITY))
