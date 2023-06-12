@@ -7,7 +7,7 @@ async function main() {
     console.log("Account balance:", (await deployer.getBalance()).toString());
 
     for (let index = 1; index <= 5; index++) {
-        const _ERC20YocToken = await hre.ethers.getContractFactory("TOKEN");
+        const _ERC20YocToken = await hre.ethers.getContractFactory("contracts/test/ERC20.sol:ERC20");
         const constructorArguments = [
             "YOC-FoundersCoin for Liquidity", `YOC${index}`
         ]
