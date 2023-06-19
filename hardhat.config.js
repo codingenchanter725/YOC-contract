@@ -30,7 +30,7 @@ module.exports = {
       accounts: [privateKey]
     },
     sepolia: {
-      url: "https://rpc2.sepolia.org",
+      url: "https://rpc.sepolia.org",
       chainId: 11155111,
       accounts: [privateKey]
     },
