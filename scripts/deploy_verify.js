@@ -32,12 +32,12 @@ async function main() {
     await contractVerify(projectDetailContract.address, "ProjectDetail");
     console.log("ProjectDetail Complete!\n\n\n\n");
 
-    // const USDCFactory = await hre.ethers.getContractFactory("USDC");
-    // const USDCContract = await USDCFactory.deploy();
-    // await USDCContract.deployed();
-    // console.log("USDC Address: ", USDCContract.address);
-    // await USDCContract.deployTransaction.wait(5);
-    // console.log("USDC Complete!\n\n\n\n");
+    const USDCFactory = await hre.ethers.getContractFactory("USDC");
+    const USDCContract = await USDCFactory.deploy();
+    await USDCContract.deployed();
+    console.log("USDC Address: ", USDCContract.address);
+    await USDCContract.deployTransaction.wait(5);
+    console.log("USDC Complete!\n\n\n\n");
 
     const yocFactory = await hre.ethers.getContractFactory("YOC");
     const yocContract = await yocFactory.deploy("YOC-Global", "YOCe", 18);
