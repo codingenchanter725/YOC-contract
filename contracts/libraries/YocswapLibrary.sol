@@ -23,7 +23,7 @@ library YocswapLibrary {
                 hex'ff',
                 factory,
                 keccak256(abi.encodePacked(token0, token1)),
-                hex'1ec438fe434b467aaad1b84368901098ae64185deafae82bd83cc606dffff3e8'
+                hex'81026b6f745c6f7ac26acd18dbfc51f36df951a91383c2540af5a4a0280ee1a1'
             )))));
     }
 
@@ -46,9 +46,9 @@ library YocswapLibrary {
     function getAmountOut(uint amountIn, uint reserveIn, uint reserveOut) internal pure returns (uint amountOut) {
         require(amountIn > 0, 'YocswapLibrary: INSUFFICIENT_INPUT_AMOUNT');
         require(reserveIn > 0 && reserveOut > 0, 'YocswapLibrary: INSUFFICIENT_LIQUIDITY');
-        uint amountInWithFee = amountIn.mul(99);
+        uint amountInWithFee = amountIn.mul(9981);
         uint numerator = amountInWithFee.mul(reserveOut);
-        uint denominator = reserveIn.mul(100).add(amountInWithFee);
+        uint denominator = reserveIn.mul(10000).add(amountInWithFee);
         amountOut = numerator / denominator;
     }
 
@@ -56,8 +56,8 @@ library YocswapLibrary {
     function getAmountIn(uint amountOut, uint reserveIn, uint reserveOut) internal pure returns (uint amountIn) {
         require(amountOut > 0, 'YocswapLibrary: INSUFFICIENT_OUTPUT_AMOUNT');
         require(reserveIn > 0 && reserveOut > 0, 'YocswapLibrary: INSUFFICIENT_LIQUIDITY');
-        uint numerator = reserveIn.mul(amountOut).mul(100);
-        uint denominator = reserveOut.sub(amountOut).mul(99);
+        uint numerator = reserveIn.mul(amountOut).mul(10000);
+        uint denominator = reserveOut.sub(amountOut).mul(9981);
         amountIn = (numerator / denominator).add(1);
     }
 

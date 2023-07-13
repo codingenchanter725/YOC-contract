@@ -267,11 +267,11 @@ contract YocswapPair is IYocswapPair, YocswapERC20 {
         uint amount0In = balance0 > _reserve0 - amount0Out ? balance0 - (_reserve0 - amount0Out) : 0;
         uint amount1In = balance1 > _reserve1 - amount1Out ? balance1 - (_reserve1 - amount1Out) : 0;
         require(amount0In > 0 || amount1In > 0, 'Yocswap: INSUFFICIENT_INPUT_AMOUNT');
-        { // scope for reserve{0,1}Adjusted, avoids stack too deep errors
-            uint balance0Adjusted = (balance0.mul(10000).sub(amount0In.mul(25)));
-            uint balance1Adjusted = (balance1.mul(10000).sub(amount1In.mul(25)));
-            require(balance0Adjusted.mul(balance1Adjusted) >= uint(_reserve0).mul(_reserve1).mul(10000**2), 'Yocswap: K');
-        }
+        // { // scope for reserve{0,1}Adjusted, avoids stack too deep errors
+        //     uint balance0Adjusted = (balance0.mul(10000).sub(amount0In.mul(25)));
+        //     uint balance1Adjusted = (balance1.mul(10000).sub(amount1In.mul(25)));
+        //     require(balance0Adjusted.mul(balance1Adjusted) >= uint(_reserve0).mul(_reserve1).mul(10000**2), 'Yocswap: K');
+        // }
 
         _update(balance0, balance1, _reserve0, _reserve1);
         emit Swap(msg.sender, amount0In, amount1In, amount0Out, amount1Out, to);

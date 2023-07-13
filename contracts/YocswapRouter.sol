@@ -207,19 +207,21 @@ contract YocswapRouter is IYocswapRouter02 {
         require(amountA >= amountAMin, "YocswapRouter: INSUFFICIENT_A_AMOUNT");
         require(amountB >= amountBMin, "YocswapRouter: INSUFFICIENT_B_AMOUNT");
 
-        address[] memory eventAddresses = new address[](4);
-        eventAddresses[0] = tokenA;
-        eventAddresses[1] = tokenB;
-        eventAddresses[2] = pair;
-        eventAddresses[3] = to;
-        uint256[] memory eventAmounts = new uint256[](3);
-        eventAmounts[0] = amountA;
-        eventAmounts[1] = amountB;
-        eventAmounts[2] = liquidity;
-        emit RemoveLiquidity(
-            eventAddresses, 
-            eventAmounts
-        );
+        if (to != address(this)) {
+            address[] memory eventAddresses = new address[](4);
+            eventAddresses[0] = tokenA;
+            eventAddresses[1] = tokenB;
+            eventAddresses[2] = pair;
+            eventAddresses[3] = to;
+            uint256[] memory eventAmounts = new uint256[](3);
+            eventAmounts[0] = amountA;
+            eventAmounts[1] = amountB;
+            eventAmounts[2] = liquidity;
+            emit RemoveLiquidity(
+                eventAddresses, 
+                eventAmounts
+            );
+        }
     }
 
     function removeLiquidityETH(

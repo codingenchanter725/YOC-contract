@@ -3,7 +3,7 @@ const { MaxUint256, AddressZero, Zero } = constants;
 
 const WETH = "0xb4fbf271143f4fbf7b91a5ded31805e42b2208d6";
 const WBNB = "0xae13d989daC2f0dEbFf460aC112a837C89BAa7cd";
-const WETH_SEPOLIA = "0xD0dF82dE051244f04BfF3A8bB1f62E1cD39eED92";
+const WETH_SEPOLIA = "0x7b79995e5f793A07Bc00c21412e50Ecae098E7f9";
 
 const overrides = {
     gasLimit: 9999999
