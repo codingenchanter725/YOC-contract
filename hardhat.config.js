@@ -19,7 +19,7 @@ module.exports = {
         blockNumber: 9145061
       },
     },
-    testnet: {
+    bsctest: {
       url: "https://data-seed-prebsc-1-s1.binance.org:8545/",//"https://data-seed-prebsc-1-s1.binance.org:8545/",//"https://rpc-mumbai.maticvigil.com/",
       chainId: 97,//80001, //97,
       accounts: [privateKey]
@@ -34,7 +34,7 @@ module.exports = {
       chainId: 11155111,
       accounts: [privateKey]
     },
-    mainnet: {
+    bscmain: {
       url: "https://bsc-dataseed1.defibit.io/",//"https://polygon-rpc.com",
       chainId: 56,
       accounts: [privateKey]
