@@ -52,10 +52,10 @@ contract YocStaking is Ownable, Pausable {
     uint256 public constant PRECISION_FACTOR_SHARE = 1e28; // precision factor for share.
     uint256 public constant MIN_DEPOSIT_AMOUNT = 0.00001 ether;
     uint256 public constant MIN_WITHDRAW_AMOUNT = 0.00001 ether;
-    uint256 public constant PERCENT_PRECISION = 1000; // percent precision
+    uint256 public constant PERCENT_PRECISION = 10000; // percent precision
 
-    uint256 public depositFee = 25; // 2.5%
-    uint256 public withdrawFee = 10; // 1%
+    uint256 public depositFee = 19; // 0.19%
+    uint256 public withdrawFee = 19; // 0.19%
     uint256 public withdrawFeePeriod = 7 days; // 7 days
 
     event Deposit(

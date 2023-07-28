@@ -47,10 +47,10 @@ contract TokenStaking is Ownable, Pausable, ReentrancyGuard {
     address public treasury;
     uint256 public yocPoolPID;
 
-    uint256 public constant PERCENT_PRECISION = 1000; // percent precision
+    uint256 public constant PERCENT_PRECISION = 10000; // percent precision
     uint256 public constant ACC_YOC_PRECISION = 1e18;
 
-    uint256 public DEPOSIT_FEE = 25; // 2.5%
+    uint256 public DEPOSIT_FEE = 19; // 0.19%
 
     event Deposit(
         address indexed sender,
