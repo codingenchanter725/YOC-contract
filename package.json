@@ -12,6 +12,7 @@
     "solidity-coverage": "^0.7.20"
   },
   "dependencies": {
+    "@chainlink/contracts": "^0.6.1",
     "@remix-project/remixd": "^0.6.14",
     "dotenv": "^16.0.3"
   }

@@ -15,8 +15,8 @@ module.exports = {
   networks: {
     hardhat: {
       forking: {
-        url: "https://goerli.infura.io/v3/9aa3d95b3bc440fa88ea12eaa4456161",
-        blockNumber: 9145061
+        url: "https://ethereum-sepolia.blockpi.network/v1/rpc/public",
+        blockNumber: 4203417
       },
     },
     bsctest: {
@@ -30,7 +30,7 @@ module.exports = {
       accounts: [privateKey]
     },
     sepolia: {
-      url: "https://eth-sepolia.g.alchemy.com/v2/9XxUB2Hodsix6mDB_6uE4U-Ap6tg4c5c",
+      url: "https://ethereum-sepolia.blockpi.network/v1/rpc/public",
       chainId: 11155111,
       accounts: [privateKey]
     },
@@ -47,8 +47,8 @@ module.exports = {
   etherscan: {
     // Your API key for Etherscan
     // Obtain one at https://bscscan.com/
-    apiKey: "KK9WGHD5CUJXH2DEVJKV5M47VZDCE6N4WX"
-    // apiKey: "UCDP2TXWW1PPZFRAMTUQNS5KGFXPESH5RH" //bsc
+    // apiKey: "KK9WGHD5CUJXH2DEVJKV5M47VZDCE6N4WX"
+    apiKey: "UCDP2TXWW1PPZFRAMTUQNS5KGFXPESH5RH" //bsc
   },
   solidity: {
     compilers: [
