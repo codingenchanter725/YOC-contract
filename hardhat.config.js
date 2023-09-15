@@ -15,14 +15,14 @@ module.exports = {
   networks: {
     hardhat: {
       forking: {
-        url: "https://ethereum-sepolia.blockpi.network/v1/rpc/public",
+        url: "https://rpc.ankr.com/eth_sepolia/8520362fc199056906a44b06b68b4efa1f09aeeaee96a8aa84d9c3e0f94c9eaf",
         blockNumber: 4203417
       },
     },
     bsctest: {
-      url: "https://data-seed-prebsc-1-s1.binance.org:8545/",//"https://data-seed-prebsc-1-s1.binance.org:8545/",//"https://rpc-mumbai.maticvigil.com/",
+      url: "https://rpc.ankr.com/bsc_testnet_chapel/8520362fc199056906a44b06b68b4efa1f09aeeaee96a8aa84d9c3e0f94c9eaf",
       chainId: 97,//80001, //97,
-      accounts: [privateKey]
+      accounts: [privateKey],
     },
     goerli: {
       url: "https://goerli.infura.io/v3/9aa3d95b3bc440fa88ea12eaa4456161",
@@ -30,12 +30,12 @@ module.exports = {
       accounts: [privateKey]
     },
     sepolia: {
-      url: "https://ethereum-sepolia.blockpi.network/v1/rpc/public",
+      url: "https://rpc.ankr.com/eth_sepolia/8520362fc199056906a44b06b68b4efa1f09aeeaee96a8aa84d9c3e0f94c9eaf", // "https://ethereum-sepolia.blockpi.network/v1/rpc/public",
       chainId: 11155111,
       accounts: [privateKey]
     },
     bscmain: {
-      url: "https://bsc-dataseed1.defibit.io/",//"https://polygon-rpc.com",
+      url: "https://rpc.ankr.com/bsc/8520362fc199056906a44b06b68b4efa1f09aeeaee96a8aa84d9c3e0f94c9eaf",
       chainId: 56,
       accounts: [privateKey]
     },
@@ -47,8 +47,8 @@ module.exports = {
   etherscan: {
     // Your API key for Etherscan
     // Obtain one at https://bscscan.com/
-    // apiKey: "KK9WGHD5CUJXH2DEVJKV5M47VZDCE6N4WX"
-    apiKey: "UCDP2TXWW1PPZFRAMTUQNS5KGFXPESH5RH" //bsc
+    apiKey: "KK9WGHD5CUJXH2DEVJKV5M47VZDCE6N4WX"
+    // apiKey: "UCDP2TXWW1PPZFRAMTUQNS5KGFXPESH5RH" //bsc
   },
   solidity: {
     compilers: [

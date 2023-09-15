@@ -57,7 +57,8 @@ describe("Test YUSD", function () {
         console.log("YOC Address: ", YOC.address);
 
         const YUSDFactory = await hre.ethers.getContractFactory("YUSD");
-        YUSD = await YUSDFactory.deploy(WETH.address, YOC.address, yocswapRouterContract.address, deployer.address);
+        YUSD = await YUSDFactory.deploy(WETH.address, YOC.address, yocswapRouterContract.address, deployer.address, "0x694AA1769357215DE4FAC081bf1f309aDC325306"); // Sepolia
+        // YUSD = await YUSDFactory.deploy(WETH.address, YOC.address, yocswapRouterContract.address, deployer.address, "0x2514895c72f50D8bd4B4F9b1110F0D6bD2c97526"); // bsc testnet
         await YUSD.deployed();
         console.log("YUSD Address:", YUSD.address);
 
@@ -128,13 +129,13 @@ describe("Test YUSD", function () {
 
         //  Mint
         console.log("<============ Mint YUSD =============>")
-        let requireETHAmount = await YUSD.getETHAmountForMint(1000);
+        let requireETHAmount = await YUSD.getETHAmountForMint(100);
         console.log("require ETH", smallNum(requireETHAmount));
-        await YUSD.connect(wallet_2).mint(1000, {
+        await YUSD.connect(wallet_2).mint(100, {
             value: requireETHAmount
         });
         let amount = smallNum_6(await YUSD.balanceOf(wallet_2.address));
-        console.log("<=== Mint 1000 YUSD ===>")
+        console.log("<=== Mint 100 YUSD ===>")
         console.log("YUSD Totalsupply", smallNum_6(await YUSD.totalSupply()));
         console.log("ETH of YUSD contract", smallNum(await ethers.provider.getBalance(YUSD.address)));
         console.log("YOC of YUSD contract", smallNum(await YOC.balanceOf(YUSD.address)));
@@ -142,15 +143,15 @@ describe("Test YUSD", function () {
         console.log("YUSD price", smallNum_6(await YUSD.price()), "\n");
         console.log("YUSD Totalsupply", smallNum_6(await YUSD.totalSupply()));
 
-        await YUSD.connect(wallet_2).transfer(wallet_3.address, bigNum_6(1000));
+        await YUSD.connect(wallet_2).transfer(wallet_3.address, bigNum_6(100));
 
         // Burn
         console.log("<============ Burn YUSD =============>")
         console.log("wallet_3 ETH", smallNum(await wallet_3.getBalance()));
         console.log("wallet_3 YOC", smallNum(await YOC.balanceOf(wallet_3.address)));
         console.log("wallet_3 YUSD", smallNum_6(await YUSD.balanceOf(wallet_3.address)));
-        await YUSD.connect(wallet_3).burn(100);
-        console.log("<=== Burn 100 YUSD ===>")
+        await YUSD.connect(wallet_3).burn(10);
+        console.log("<=== Burn 10 YUSD ===>")
         console.log("wallet_3 ETH", smallNum(await wallet_3.getBalance()));
         console.log("wallet_3 YOC", smallNum(await YOC.balanceOf(wallet_3.address)));
         console.log("wallet_3 YUSD", smallNum_6(await YUSD.balanceOf(wallet_3.address)));
@@ -163,61 +164,28 @@ describe("Test YUSD", function () {
 
         console.log("<============ Set admin wallet =============>");
         await YUSD.setAdmin(wallet_admin.address);
+        
+        console.log("<============ Set auto function1 action =============>");
+        await YUSD.connect(wallet_admin).setAutoFunction1Action(true);
+        console.log("setAutoFunction1Action", await YUSD.autoFunction1Action());
+
 
         {
-            // console.log("<============ ETH/YOC pool is changed for function1! ============>")
-            // await yocswapRouterContract.connect(wallet_1).swapExactETHForTokens(
-            //     0,
-            //     [WETH.address, YOC.address],
-            //     wallet_1.address,
-            //     MaxUint256, 
-            //     {
-            //         value: bigNum(5)
-            //     }
-            // );
-            // console.log("ETH Percentage", (await YUSD.rate()) / 100);
-            // console.log("YUSD price", smallNum_6(await YUSD.price()), "\n");
-
-            // console.log("\n<============ Function1 =============>");
-            // await YUSD.connect(wallet_admin).function1();
-            // console.log("wallet_admin ETH", smallNum(await wallet_admin.getBalance()));
-            // console.log("wallet_admin YOC", smallNum(await YOC.balanceOf(wallet_admin.address)));
-            // console.log("wallet_admin YUSD", smallNum_6(await YUSD.balanceOf(wallet_admin.address)));
-            // console.log("YUSD Totalsupply", smallNum_6(await YUSD.totalSupply()));
-            // console.log("ETH of YUSD contract", smallNum(await ethers.provider.getBalance(YUSD.address)));
-            // console.log("YOC of YUSD contract", smallNum(await YOC.balanceOf(YUSD.address)));
-            // console.log("ETH Percentage", (await YUSD.rate()) / 100);
-            // console.log("YUSD price", smallNum_6(await YUSD.price()), "\n");
-        }
-
-        {
-            console.log("<============ ETH/YOC pool is changed for function2! ETH:20% ============>")
+            console.log("<============ ETH/YOC pool is changed for function1! ============>")
             await yocswapRouterContract.connect(wallet_1).swapExactETHForTokens(
                 0,
                 [WETH.address, YOC.address],
                 wallet_1.address,
-                MaxUint256,
+                MaxUint256, 
                 {
-                    value: bigNum(4)
+                    value: bigNum(15)
                 }
             );
-            
-            // await TOKENPoolContract.connect(wallet_1).withdraw(0);
-            // let YOCamount = smallNum(await YOC.balanceOf(wallet_1.address));
-            // console.log("withdraw and get YOC", YOCamount);
-            // await yocswapRouterContract.connect(wallet_1).swapExactTokensForETH(
-            //     bigNum(14000),
-            //     0,
-            //     [YOC.address, WETH.address],
-            //     wallet_1.address,
-            //     MaxUint256
-            // );
-
             console.log("ETH Percentage", (await YUSD.rate()) / 100);
             console.log("YUSD price", smallNum_6(await YUSD.price()), "\n");
 
-            console.log("\n<============ Function2 =============>");
-            await YUSD.connect(wallet_admin).function2();
+            console.log("\n<============ Function1 =============>");
+            await YUSD.connect(wallet_admin).function1();
             console.log("wallet_admin ETH", smallNum(await wallet_admin.getBalance()));
             console.log("wallet_admin YOC", smallNum(await YOC.balanceOf(wallet_admin.address)));
             console.log("wallet_admin YUSD", smallNum_6(await YUSD.balanceOf(wallet_admin.address)));
@@ -226,6 +194,45 @@ describe("Test YUSD", function () {
             console.log("YOC of YUSD contract", smallNum(await YOC.balanceOf(YUSD.address)));
             console.log("ETH Percentage", (await YUSD.rate()) / 100);
             console.log("YUSD price", smallNum_6(await YUSD.price()), "\n");
+        }
+
+        {
+            // console.log("<============ ETH/YOC pool is changed for function2! ETH:20% ============>")
+            // await yocswapRouterContract.connect(wallet_1).swapExactETHForTokens(
+            //     0,
+            //     [WETH.address, YOC.address],
+            //     wallet_1.address,
+            //     MaxUint256,
+            //     {
+            //         value: bigNum(4)
+            //     }
+            // );
+            
+            // // await TOKENPoolContract.connect(wallet_1).withdraw(0);
+            // // let YOCamount = smallNum(await YOC.balanceOf(wallet_1.address));
+            // // console.log("withdraw and get YOC", YOCamount);
+            // // await yocswapRouterContract.connect(wallet_1).swapExactTokensForETH(
+            // //     bigNum(14000),
+            // //     0,
+            // //     [YOC.address, WETH.address],
+            // //     wallet_1.address,
+            // //     MaxUint256
+            // // );
+
+            // console.log("ETH Percentage", (await YUSD.rate()) / 100);
+            // console.log("YUSD price", smallNum_6(await YUSD.price()), "\n");
+
+            // console.log("\n<============ Function2 =============>");
+            // console.log("detailsByFunction2", await YUSD.connect(wallet_admin).getReblancedDetailByFunction2())
+            // await YUSD.connect(wallet_admin).function2();
+            // console.log("wallet_admin ETH", smallNum(await wallet_admin.getBalance()));
+            // console.log("wallet_admin YOC", smallNum(await YOC.balanceOf(wallet_admin.address)));
+            // console.log("wallet_admin YUSD", smallNum_6(await YUSD.balanceOf(wallet_admin.address)));
+            // console.log("YUSD Totalsupply", smallNum_6(await YUSD.totalSupply()));
+            // console.log("ETH of YUSD contract", smallNum(await ethers.provider.getBalance(YUSD.address)));
+            // console.log("YOC of YUSD contract", smallNum(await YOC.balanceOf(YUSD.address)));
+            // console.log("ETH Percentage", (await YUSD.rate()) / 100);
+            // console.log("YUSD price", smallNum_6(await YUSD.price()), "\n");
         }
 
         // console.log("<=== Burn 100 YUSD ===>")

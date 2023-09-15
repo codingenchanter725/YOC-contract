@@ -79,7 +79,7 @@ contract YOC is IERC20, SafeMath, Ownable {
     uint256 public _totalSupply;
 
     uint256 public constant MINT_INTERVAL = 1; // minting interval in seconds
-    uint256 public constant MINT_AMOUNT_PER = 100;
+    uint256 public constant MINT_AMOUNT_PER = 100 * 10000;
     uint256 public lastMintTime;
     mapping(address => bool) public isAddressForTransferToThere;
 

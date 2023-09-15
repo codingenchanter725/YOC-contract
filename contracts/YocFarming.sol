@@ -71,7 +71,7 @@ contract YOCMasterChef is Ownable, ReentrancyGuard {
 
     uint256 public totalAllocPoint;
     uint256 public constant ACC_YOC_PRECISION = 1e18;
-    uint256 public constant MASTERCHEF_YOC_PER_BLOCK = 20 * ACC_YOC_PRECISION;
+    uint256 public constant MASTERCHEF_YOC_PER_BLOCK = 20000 * ACC_YOC_PRECISION;
 
     uint256 public constant DEPOSIT_FEE = 19;
     uint256 public constant WITHDRAW_FEE = 19;

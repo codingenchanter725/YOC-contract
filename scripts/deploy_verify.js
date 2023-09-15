@@ -6,6 +6,9 @@ const WETH = "0xb4fbf271143f4fbf7b91a5ded31805e42b2208d6";
 const WBNB = "0xae13d989daC2f0dEbFf460aC112a837C89BAa7cd";
 const WETH_SEPOLIA = "0x7b79995e5f793A07Bc00c21412e50Ecae098E7f9";
 
+const SEPOLIA_FEED = "0x694AA1769357215DE4FAC081bf1f309aDC325306";
+const BNB_FEED = "0x2514895c72f50D8bd4B4F9b1110F0D6bD2c97526";
+
 const overrides = {
     gasLimit: 9999999
 }
@@ -16,28 +19,28 @@ async function main() {
     console.log("Deploying contracts with the account:", deployer.address);
     console.log("Account balance:", (await deployer.getBalance()).toString());
 
-    const projectManageFactory = await hre.ethers.getContractFactory("ProjectManage");
-    const projectManageContract = await projectManageFactory.deploy();
-    await projectManageContract.deployed();
-    await projectManageContract.deployTransaction.wait(5);
-    console.log("ProjectManage Address: ", projectManageContract.address);
-    await contractVerify(projectManageContract.address, "ProjectManage");
-    console.log("ProjectManage Complete!\n\n\n\n");
+    // const projectManageFactory = await hre.ethers.getContractFactory("ProjectManage");
+    // const projectManageContract = await projectManageFactory.deploy();
+    // await projectManageContract.deployed();
+    // await projectManageContract.deployTransaction.wait(5);
+    // console.log("ProjectManage Address: ", projectManageContract.address);
+    // await contractVerify(projectManageContract.address, "ProjectManage");
+    // console.log("ProjectManage Complete!\n\n\n\n");
 
-    const projectDetailFactory = await hre.ethers.getContractFactory("ProjectDetail");
-    const projectDetailContract = await projectDetailFactory.deploy();
-    await projectDetailContract.deployed();
-    console.log("ProjectDetail Address: ", projectDetailContract.address);
-    await projectDetailContract.deployTransaction.wait(5);
-    await contractVerify(projectDetailContract.address, "ProjectDetail");
-    console.log("ProjectDetail Complete!\n\n\n\n");
+    // const projectDetailFactory = await hre.ethers.getContractFactory("ProjectDetail");
+    // const projectDetailContract = await projectDetailFactory.deploy();
+    // await projectDetailContract.deployed();
+    // console.log("ProjectDetail Address: ", projectDetailContract.address);
+    // await projectDetailContract.deployTransaction.wait(5);
+    // await contractVerify(projectDetailContract.address, "ProjectDetail");
+    // console.log("ProjectDetail Complete!\n\n\n\n");
 
-    const USDCFactory = await hre.ethers.getContractFactory("USDC");
-    const USDCContract = await USDCFactory.deploy();
-    await USDCContract.deployed();
-    console.log("USDC Address: ", USDCContract.address);
-    await USDCContract.deployTransaction.wait(5);
-    console.log("USDC Complete!\n\n\n\n");
+    // const USDCFactory = await hre.ethers.getContractFactory("USDC");
+    // const USDCContract = await USDCFactory.deploy();
+    // await USDCContract.deployed();
+    // console.log("USDC Address: ", USDCContract.address);
+    // await USDCContract.deployTransaction.wait(5);
+    // console.log("USDC Complete!\n\n\n\n");
 
     const yocFactory = await hre.ethers.getContractFactory("YOC");
     const yocContract = await yocFactory.deploy("YOC-Global", "YOCe", 18);
@@ -77,6 +80,14 @@ async function main() {
 
     await yocContract.setAddressForTransferToThere(yocMasterChefContract.address, true);
     console.log("Set MasterChef Address of YOC contract\n");
+
+    const YUSDFactory = await hre.ethers.getContractFactory("YUSD");
+    const YUSD = await YUSDFactory.deploy(WETH_SEPOLIA, yocContract.address, yocswapRouterContract.address, deployer.address, SEPOLIA_FEED);
+    await YUSD.deployed();
+    console.log("YUSD Address:", YUSD.address);
+    await YUSD.deployTransaction.wait(5);
+    await contractVerify(YUSD.address, 'YUSD', [WETH_SEPOLIA, yocContract.address, yocswapRouterContract.address, deployer.address, SEPOLIA_FEED]);
+    console.log("YUSD Complete!\n\n\n\n");
 }
 
 async function contractVerify(address, contract, constructorArguments = [], libraries = {}) {

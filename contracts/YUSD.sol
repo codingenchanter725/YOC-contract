@@ -81,6 +81,7 @@ contract YUSD is IERC20, SafeMath, Ownable {
     uint8 public decimals = 6;
     uint256 public _totalSupply = 0;
     uint256 public _burnSupply = 0;
+    bool public autoFunction1Action = false;
 
     address public admin;
     address public immutable WETH;
@@ -92,10 +93,16 @@ contract YUSD is IERC20, SafeMath, Ownable {
     mapping(address => uint256) private balances;
     mapping(address => mapping(address => uint256)) private allowances;
 
-    event Mint(address, uint256);
-    event Burn(address, uint256);
+    event Mint(address user, uint256 YUSDAmount, uint256 PaidAmount);
+    event Burn(
+        address user,
+        uint256 YUSDAmount,
+        uint256 ETHAmount,
+        uint256 YOCAmount
+    );
     event Function1(uint256 transferETHAmount, uint256 transferYOCAmount, bool);
-    event Function2(uint256 swapETHAmount, uint256 swapYOCAmount);
+    event Function2(bool isETHtoYOC, uint256 transferredAmount);
+    event SetAutoFunction1Action(bool state);
 
     modifier onlyAdmin() {
         require(admin == msg.sender, "You are not an administrator");
@@ -111,14 +118,13 @@ contract YUSD is IERC20, SafeMath, Ownable {
         address _WETH,
         address _YOC,
         address _YocSwapRouter,
-        address _admin
+        address _admin,
+        address _aggregator
     ) {
         WETH = _WETH;
         YOC = _YOC;
         admin = _admin;
-        ETHFeed = AggregatorV3Interface(
-            0x694AA1769357215DE4FAC081bf1f309aDC325306
-        );
+        ETHFeed = AggregatorV3Interface(_aggregator);
         YocSwapRouter = IYocswapRouter02(_YocSwapRouter);
     }
 
@@ -212,8 +218,7 @@ contract YUSD is IERC20, SafeMath, Ownable {
         unchecked {
             balances[account] += (amount * 10 ** decimals);
         }
-        emit Mint(account, amount);
-        emit Transfer(address(0), account, amount);
+        emit Transfer(address(0), account, amount * 10 ** decimals);
     }
 
     function _burn(address account, uint256 amount) internal virtual {
@@ -223,13 +228,11 @@ contract YUSD is IERC20, SafeMath, Ownable {
         unchecked {
             balances[account] -= (amount * 10 ** decimals);
         }
-        emit Burn(account, amount);
-        emit Transfer(account, address(0), amount);
+        emit Transfer(account, address(0), amount * 10 ** decimals);
     }
 
     function mint(uint256 _amount) public payable returns (bool success) {
-        uint256 requiredETHAmount = (_amount / getETHPrice() / (10 ** 6)) *
-            (10 ** 18);
+        uint256 requiredETHAmount = _amount * 10 ** 6 * 10 ** 18 / getETHPrice();
         require(msg.value >= requiredETHAmount, "Insufficient payment");
         // uint256 beforeETHBalance = address(this).balance;
         // uint256 beforeYOCBalance = IERC20(YOC).balanceOf(address(this));
@@ -249,6 +252,7 @@ contract YUSD is IERC20, SafeMath, Ownable {
         //     beforeYOCBalance;
 
         _mint(msg.sender, _amount);
+        emit Mint(msg.sender, _amount, requiredETHAmount);
         return true;
     }
 
@@ -273,6 +277,12 @@ contract YUSD is IERC20, SafeMath, Ownable {
         IERC20(YOC).transfer(msg.sender, amounts[1]);
         payable(msg.sender).transfer((totalETHBalance * 75) / 100);
         _burn(msg.sender, _amount);
+        emit Burn(
+            msg.sender,
+            _amount,
+            (totalETHBalance * 75) / 100,
+            amounts[1]
+        );
         return true;
     }
 
@@ -316,13 +326,14 @@ contract YUSD is IERC20, SafeMath, Ownable {
             YOC_WETHpath
         );
         uint256 totalBalanceByETH = address(this).balance + amounts1[1];
-        uint256 finalETHBalance = (totalBalanceByETH * 75) / 100;
+        uint256 finalTotalETHBalance = (totalBalanceByETH * 70) / 100;
+        uint256 finalETHBalance = (finalTotalETHBalance * 75) / 100;
 
         address[] memory WETH_YOCpath = new address[](2);
         WETH_YOCpath[0] = WETH;
         WETH_YOCpath[1] = YOC;
         uint256[] memory amounts2 = YocSwapRouter.getAmountsOut(
-            (totalBalanceByETH * 25) / 100,
+            (finalTotalETHBalance * 25) / 100,
             WETH_YOCpath
         );
         uint256 finalYOCBalance = amounts2[1];
@@ -361,7 +372,11 @@ contract YUSD is IERC20, SafeMath, Ownable {
         return true;
     }
 
-    function function2() public onlyAdmin returns (bool success) {
+    function getReblancedDetailByFunction2()
+        public view
+        onlyAdmin
+        returns (bool isETHtoYOC, uint256 transferredAmount)
+    {
         uint256 YOCBalance = IERC20(YOC).balanceOf(address(this));
         address[] memory YOC_WETHpath = new address[](2);
         YOC_WETHpath[0] = YOC;
@@ -375,39 +390,73 @@ contract YUSD is IERC20, SafeMath, Ownable {
 
         if (finalETHBalance < address(this).balance) {
             // 75% < ETH, ETH > YOC : ETH->YOC
+            isETHtoYOC = true;
+            transferredAmount = address(this).balance - finalETHBalance;
+        } else {
+            // 75% > ETH => 25% < YOC -> YOC->ETH
+            uint256[] memory amounts2 = YocSwapRouter.getAmountsIn(
+                finalETHBalance - address(this).balance,
+                YOC_WETHpath
+            );
+            isETHtoYOC = false;
+            transferredAmount = amounts2[0];
+        }
+    }
+
+    function function2() public onlyAdmin returns (bool success) {
+        (
+            bool isETHtoYOC,
+            uint256 transferredAmount
+        ) = getReblancedDetailByFunction2();
+
+        if (isETHtoYOC) {
+            // 75% < ETH, ETH > YOC : ETH->YOC
             address[] memory WETH_YOCpath = new address[](2);
             WETH_YOCpath[0] = WETH;
             WETH_YOCpath[1] = YOC;
-            YocSwapRouter.swapExactETHForTokens{
-                value: (address(this).balance - finalETHBalance)
-            }(0, WETH_YOCpath, address(this), block.timestamp + 3600);
-
-            emit Function2(address(this).balance - finalETHBalance, 0);
+            YocSwapRouter.swapExactETHForTokens{value: (transferredAmount)}(
+                0,
+                WETH_YOCpath,
+                address(this),
+                block.timestamp + 3600
+            );
         } else {
             // 75% > ETH => 25% < YOC -> YOC->ETH
+            address[] memory YOC_WETHpath = new address[](2);
+            YOC_WETHpath[0] = YOC;
+            YOC_WETHpath[1] = WETH;
+
             // IERC20(YOC).approve(address(YocSwapRouter), YOCBalance);
             // YocSwapRouter.swapTokensForExactETH(
-            //     finalETHBalance - address(this).balance,
+            //     transferredAmount,
             //     YOCBalance,
             //     YOC_WETHpath,
             //     address(this),
             //     block.timestamp + 36000
             // );
-
-            uint256[] memory amounts2 = YocSwapRouter.getAmountsIn(finalETHBalance - address(this).balance, YOC_WETHpath);
-            IERC20(YOC).approve(address(YocSwapRouter), amounts2[0]);
-            // require(IERC20(YOC).balanceOf(address(this)) >= amounts2[0], "insuficient amount");
-            require(false, concatStrings("bbbb:", uint256ToString(IERC20(YOC).balanceOf(address(this)))));
-            require(false, concatStrings("aaa:", uint256ToString(amounts2[0])));
+            
+            IERC20(YOC).approve(address(YocSwapRouter), transferredAmount);
+            // require(IERC20(YOC).balanceOf(address(this)) >= transferredAmount, "insuficient amount");
+            // require(false, concatStrings("bbbb:", uint256ToString(IERC20(YOC).balanceOf(address(this)))));
+            // require(false, concatStrings("aaa:", uint256ToString(transferredAmount)));
+            // require(false, concatStrings("bbbb:", uint256ToString((address(msg.sender).balance))));
             YocSwapRouter.swapExactTokensForETH(
-                amounts2[0],
+                transferredAmount,
                 0,
                 YOC_WETHpath,
                 address(this),
                 block.timestamp + 3600
             );
-            emit Function2(0, finalETHBalance - address(this).balance);
         }
+        emit Function2(isETHtoYOC, transferredAmount);
+        return true;
+    }
+
+    function setAutoFunction1Action(
+        bool state
+    ) public onlyAdmin returns (bool) {
+        autoFunction1Action = state;
+        emit SetAutoFunction1Action(state);
         return true;
     }
 
@@ -446,5 +495,8 @@ contract YUSD is IERC20, SafeMath, Ownable {
             result[ba.length + i] = bb[i];
         }
         return string(result);
+    }
+
+    receive() external payable {
     }
 }
