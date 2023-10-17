@@ -74,7 +74,7 @@ contract SafeMath {
     }
 }
 
-contract YUSD is IERC20, SafeMath, Ownable {
+contract YUSD_ is IERC20, SafeMath, Ownable {
     // name, symbol, decimals are a part of ERC20 standard, and are OPTIONAL
     string public constant name = "YUSD";
     string public constant symbol = "YUSD";
@@ -317,18 +317,57 @@ contract YUSD is IERC20, SafeMath, Ownable {
     }
 
     function function1() public onlyAdmin returns (bool success) {
-        uint256 finalETHBalance = (address(this).balance * 70) / 100;
         uint256 YOCBalance = IERC20(YOC).balanceOf(address(this));
-        uint256 finalYOCBalance = (YOCBalance * 70) / 100;
-
-        IERC20(YOC).transfer(admin, YOCBalance - finalYOCBalance);
-        uint256 ETHBalance = address(this).balance;
-        payable(admin).transfer(ETHBalance - finalETHBalance);
-        emit Function1(
-            ETHBalance - finalETHBalance,
-            YOCBalance - finalYOCBalance,
-            true
+        address[] memory YOC_WETHpath = new address[](2);
+        YOC_WETHpath[0] = YOC;
+        YOC_WETHpath[1] = WETH;
+        uint256[] memory amounts1 = YocSwapRouter.getAmountsOut(
+            YOCBalance,
+            YOC_WETHpath
         );
+        uint256 totalBalanceByETH = address(this).balance + amounts1[1];
+        uint256 finalTotalETHBalance = (totalBalanceByETH * 70) / 100;
+        uint256 finalETHBalance = (finalTotalETHBalance * 75) / 100;
+
+        address[] memory WETH_YOCpath = new address[](2);
+        WETH_YOCpath[0] = WETH;
+        WETH_YOCpath[1] = YOC;
+        uint256[] memory amounts2 = YocSwapRouter.getAmountsOut(
+            (finalTotalETHBalance * 25) / 100,
+            WETH_YOCpath
+        );
+        uint256 finalYOCBalance = amounts2[1];
+
+        // if admin wants to withdraw YOC,ETH and finalbalances are bigger than current balances, can't withdraw them
+        if (finalYOCBalance < YOCBalance) {
+            // can withdraw YOC
+            IERC20(YOC).transfer(admin, YOCBalance - finalYOCBalance);
+            uint256 ETHBalance = address(this).balance;
+            if (ETHBalance > finalETHBalance) {
+                // can withdraw ETH
+                payable(admin).transfer(ETHBalance - finalETHBalance);
+                // YOC, ETH withdraw successfully
+                emit Function1(
+                    ETHBalance - finalETHBalance,
+                    YOCBalance - finalYOCBalance,
+                    true
+                );
+            } else {
+                // YOC, not ETH withdraw successfully
+                emit Function1(0, YOCBalance - finalYOCBalance, false);
+            }
+        } else {
+            // can withdraw ETH
+            uint256 ETHBalance = address(this).balance;
+            if (ETHBalance > finalETHBalance) {
+                // not YOC, ETH withdraw successfully
+                payable(admin).transfer(ETHBalance - finalETHBalance);
+                emit Function1(ETHBalance - finalETHBalance, 0, false);
+            } else {
+                // not YOC, not ETH withdraw successfully
+                emit Function1(0, 0, false);
+            }
+        }
 
         return true;
     }
