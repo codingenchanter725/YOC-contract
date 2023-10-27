@@ -86,6 +86,7 @@ contract ProjectTrade is SafeMath, Ownable {
         uint256 buyOrderId;
         uint256 sellOrderId;
         uint256 timestamp;
+        bool isCancelled;
     }
 
     struct Order {
@@ -95,13 +96,15 @@ contract ProjectTrade is SafeMath, Ownable {
         uint256[] transactionIds;
         uint256 remainingAmount;
         bool isCancelled;
+        bool isBuy;
         uint256 timestamp;
     }
 
     address[] public PTokens;
     mapping(address => Transaction[]) public transactions;
-    mapping(address => Order[]) public buyOrders;
-    mapping(address => Order[]) public sellOrders;
+    mapping(address => Order[]) public orders;
+    mapping(address => uint256[]) public buyOrders;
+    mapping(address => uint256[]) public sellOrders;
 
     event OrderCreated(
         address pToken,
@@ -112,7 +115,7 @@ contract ProjectTrade is SafeMath, Ownable {
         bool isBuy
     );
     event SetPrice(address pToken, uint256 price, uint256 timestamp);
-    event AddProjectToken(address pToken, uint256 timestamp);
+    event AddNewProjectToken(address pToken, uint256 timestamp);
     event TradeOrder(address pToken, address owner, uint256 orderId);
     event TradeTransaction(
         address pToken,
@@ -124,6 +127,10 @@ contract ProjectTrade is SafeMath, Ownable {
         uint256 buyOrderId,
         uint256 sellOrderId,
         uint256 timestamp
+    );
+    event CancelOrder(
+        address pToken,
+        uint256 orderId
     );
 
     constructor(address _YUSD, address _treasury) {
@@ -145,14 +152,22 @@ contract ProjectTrade is SafeMath, Ownable {
 
     function getBuyOrders(
         address _pToken
-    ) public view returns (Order[] memory buyOrder) {
-        buyOrder = buyOrders[_pToken];
+    ) public view returns (Order[] memory) {
+        Order[] memory returnOrders = new Order[](buyOrders[_pToken].length);
+        for (uint256 i = 0; i < buyOrders[_pToken].length; i++) {
+            returnOrders[i] = orders[_pToken][buyOrders[_pToken][i]];
+        }
+        return returnOrders;
     }
 
     function getSellOrders(
         address _pToken
-    ) public view returns (Order[] memory sellOrder) {
-        sellOrder = sellOrders[_pToken];
+    ) public view returns (Order[] memory) {
+        Order[] memory returnOrders = new Order[](sellOrders[_pToken].length);
+        for (uint256 i = 0; i < sellOrders[_pToken].length; i++) {
+            returnOrders[i] = orders[_pToken][sellOrders[_pToken][i]];
+        }
+        return returnOrders;
     }
 
     function getTransactions(
@@ -168,22 +183,22 @@ contract ProjectTrade is SafeMath, Ownable {
             PERCENT_PRECISION;
         YUSD.transferFrom(msg.sender, address(this), YUSDAmount);
 
-        Order memory newBuyOrder = Order({
+        Order memory newOrder = Order({
             owner: msg.sender,
             totalAmount: _amount,
             orderPrice: _price,
             transactionIds: new uint256[](0),
             remainingAmount: _amount,
             isCancelled: false,
+            isBuy: true,
             timestamp: block.timestamp
         });
-        buyOrders[_pToken].push(
-            Order(msg.sender, 0, 0, new uint256[](0), 0, false, block.timestamp)
-        );
+        orders[_pToken].push(newOrder);
+        buyOrders[_pToken].push(0);
 
         if (buyOrders[_pToken].length == 1) {
             PTokens.push(_pToken);
-            emit AddProjectToken(_pToken, block.timestamp);
+            emit AddNewProjectToken(_pToken, block.timestamp);
         }
 
         // smaller order => 10, 9, 8, 7 ...
@@ -191,7 +206,8 @@ contract ProjectTrade is SafeMath, Ownable {
         if (buyOrders[_pToken].length > 1) {
             for (uint256 i = buyOrders[_pToken].length - 1; i >= 0; i--) {
                 if (
-                    newBuyOrder.orderPrice >= buyOrders[_pToken][i].orderPrice
+                    newOrder.orderPrice >=
+                    orders[_pToken][buyOrders[_pToken][i]].orderPrice
                 ) {
                     orderId = i + 1;
                     break;
@@ -202,13 +218,13 @@ contract ProjectTrade is SafeMath, Ownable {
         for (uint256 i = buyOrders[_pToken].length - 1; i > orderId; i--) {
             buyOrders[_pToken][i] = buyOrders[_pToken][i - 1];
         }
-        buyOrders[_pToken][orderId] = newBuyOrder;
+        buyOrders[_pToken][orderId] = orders[_pToken].length - 1;
         emit OrderCreated(
             _pToken,
             msg.sender,
             orderId,
             _amount,
-            price[_pToken],
+            _price,
             true
         );
 
@@ -220,22 +236,22 @@ contract ProjectTrade is SafeMath, Ownable {
 
         IERC20(_pToken).transferFrom(msg.sender, address(this), _amount);
 
-        Order memory newSellOrder = Order({
+        Order memory newOrder = Order({
             owner: msg.sender,
             totalAmount: _amount,
             orderPrice: _price,
             transactionIds: new uint256[](0),
             remainingAmount: _amount,
             isCancelled: false,
+            isBuy: false,
             timestamp: block.timestamp
         });
-        sellOrders[_pToken].push(
-            Order(msg.sender, 0, 0, new uint256[](0), 0, false, block.timestamp)
-        );
+        orders[_pToken].push(newOrder);
+        sellOrders[_pToken].push(0);
 
         if (buyOrders[_pToken].length == 1) {
             PTokens.push(_pToken);
-            emit AddProjectToken(_pToken, block.timestamp);
+            emit AddNewProjectToken(_pToken, block.timestamp);
         }
 
         // bigger order => 1, 2, 3, 4 ...
@@ -243,7 +259,8 @@ contract ProjectTrade is SafeMath, Ownable {
         if (sellOrders[_pToken].length > 1) {
             for (uint256 i = sellOrders[_pToken].length - 1; i >= 0; i--) {
                 if (
-                    newSellOrder.orderPrice >= sellOrders[_pToken][i].orderPrice
+                    newOrder.orderPrice >=
+                    orders[_pToken][sellOrders[_pToken][i]].orderPrice
                 ) {
                     orderId = i + 1;
                     break;
@@ -255,14 +272,14 @@ contract ProjectTrade is SafeMath, Ownable {
             if (i == 0) continue;
             sellOrders[_pToken][i] = sellOrders[_pToken][i - 1];
         }
-        sellOrders[_pToken][orderId] = newSellOrder;
+        sellOrders[_pToken][orderId] = orders[_pToken].length - 1;
 
         emit OrderCreated(
             _pToken,
             msg.sender,
             orderId,
             _amount,
-            price[_pToken],
+            _price,
             false
         );
         processOrder(_pToken);
@@ -271,14 +288,17 @@ contract ProjectTrade is SafeMath, Ownable {
     function processOrder(address _pToken) internal {
         for (uint256 iSell = 0; iSell < sellOrders[_pToken].length; iSell++) {
             if (
-                sellOrders[_pToken][iSell].isCancelled == true ||
-                sellOrders[_pToken][iSell].remainingAmount == 0
+                orders[_pToken][sellOrders[_pToken][iSell]].isCancelled ==
+                true ||
+                orders[_pToken][sellOrders[_pToken][iSell]].remainingAmount == 0
             ) continue;
 
             for (uint256 iBuy = 0; iBuy < buyOrders[_pToken].length; iBuy++) {
                 if (
-                    buyOrders[_pToken][iBuy].isCancelled == true ||
-                    buyOrders[_pToken][iBuy].remainingAmount == 0
+                    orders[_pToken][buyOrders[_pToken][iBuy]].isCancelled ==
+                    true ||
+                    orders[_pToken][buyOrders[_pToken][iBuy]].remainingAmount ==
+                    0
                 ) continue;
 
                 for (
@@ -287,43 +307,54 @@ contract ProjectTrade is SafeMath, Ownable {
                     jSell++
                 ) {
                     if (
-                        sellOrders[_pToken][jSell].isCancelled == true ||
-                        sellOrders[_pToken][jSell].remainingAmount == 0
+                        orders[_pToken][sellOrders[_pToken][jSell]]
+                            .isCancelled ==
+                        true ||
+                        orders[_pToken][sellOrders[_pToken][jSell]]
+                            .remainingAmount ==
+                        0
                     ) continue;
 
                     if (
-                        sellOrders[_pToken][jSell].orderPrice <=
-                        buyOrders[_pToken][iBuy].orderPrice
+                        orders[_pToken][sellOrders[_pToken][jSell]]
+                            .orderPrice <=
+                        orders[_pToken][buyOrders[_pToken][iBuy]].orderPrice
                     ) {
                         uint256 tradeAmount = 0;
                         if (
-                            sellOrders[_pToken][jSell].remainingAmount <=
-                            buyOrders[_pToken][iBuy].remainingAmount
+                            orders[_pToken][sellOrders[_pToken][jSell]]
+                                .remainingAmount <=
+                            orders[_pToken][buyOrders[_pToken][iBuy]]
+                                .remainingAmount
                         ) {
-                            tradeAmount = sellOrders[_pToken][jSell]
-                                .remainingAmount;
+                            tradeAmount = orders[_pToken][
+                                sellOrders[_pToken][jSell]
+                            ].remainingAmount;
                         } else {
-                            tradeAmount = buyOrders[_pToken][iBuy]
-                                .remainingAmount;
+                            tradeAmount = orders[_pToken][
+                                buyOrders[_pToken][iBuy]
+                            ].remainingAmount;
                         }
 
                         setPrice(
                             _pToken,
-                            sellOrders[_pToken][jSell].orderPrice
+                            orders[_pToken][sellOrders[_pToken][jSell]]
+                                .orderPrice
                         );
 
                         IERC20(_pToken).transfer(
-                            buyOrders[_pToken][iBuy].owner,
+                            orders[_pToken][buyOrders[_pToken][iBuy]].owner,
                             tradeAmount
                         );
                         // calculate fee
                         uint256 paidYUSDAmount = (((tradeAmount *
-                            buyOrders[_pToken][iBuy].orderPrice) /
+                            orders[_pToken][buyOrders[_pToken][iBuy]]
+                                .orderPrice) /
                             (10 ** IERC20(_pToken).decimals())) *
                             (PERCENT_PRECISION - FEE)) / PERCENT_PRECISION;
 
                         YUSD.transfer(
-                            sellOrders[_pToken][jSell].owner,
+                            orders[_pToken][sellOrders[_pToken][jSell]].owner,
                             paidYUSDAmount
                         );
                         // require(
@@ -331,40 +362,46 @@ contract ProjectTrade is SafeMath, Ownable {
                         //     concatStrings("ddd", uint256ToString(paidYUSDAmount))
                         // );
 
-                        sellOrders[_pToken][jSell]
+                        orders[_pToken][sellOrders[_pToken][jSell]]
                             .remainingAmount -= tradeAmount;
-                        buyOrders[_pToken][iBuy].remainingAmount -= tradeAmount;
+                        orders[_pToken][buyOrders[_pToken][iBuy]]
+                            .remainingAmount -= tradeAmount;
 
                         Transaction memory newTransaction = Transaction({
                             amount: tradeAmount,
-                            buyPrice: buyOrders[_pToken][iBuy].orderPrice,
-                            sellPrice: sellOrders[_pToken][jSell].orderPrice,
+                            buyPrice: orders[_pToken][buyOrders[_pToken][iBuy]]
+                                .orderPrice,
+                            sellPrice: orders[_pToken][
+                                sellOrders[_pToken][jSell]
+                            ].orderPrice,
                             buyOrderId: iBuy,
                             sellOrderId: jSell,
+                            isCancelled: false,
                             timestamp: block.timestamp
                         });
                         transactions[_pToken].push(newTransaction);
 
-                        sellOrders[_pToken][jSell].transactionIds.push(
-                            transactions[_pToken].length - 1
-                        );
-                        buyOrders[_pToken][iBuy].transactionIds.push(
-                            transactions[_pToken].length - 1
-                        );
+                        orders[_pToken][sellOrders[_pToken][jSell]]
+                            .transactionIds
+                            .push(transactions[_pToken].length - 1);
+                        orders[_pToken][buyOrders[_pToken][iBuy]]
+                            .transactionIds
+                            .push(transactions[_pToken].length - 1);
 
                         // event for Seller
                         emit TradeOrder(
                             _pToken,
-                            sellOrders[_pToken][jSell].owner,
+                            orders[_pToken][sellOrders[_pToken][jSell]].owner,
                             jSell
                         );
                         emit TradeTransaction(
                             _pToken,
                             tradeAmount,
-                            sellOrders[_pToken][jSell].orderPrice,
+                            orders[_pToken][sellOrders[_pToken][jSell]]
+                                .orderPrice,
                             transactions[_pToken].length - 1,
-                            sellOrders[_pToken][jSell].owner,
-                            buyOrders[_pToken][iBuy].owner,
+                            orders[_pToken][sellOrders[_pToken][jSell]].owner,
+                            orders[_pToken][buyOrders[_pToken][iBuy]].owner,
                             jSell,
                             iBuy,
                             block.timestamp
@@ -372,13 +409,60 @@ contract ProjectTrade is SafeMath, Ownable {
                         // event for Buyer
                         emit TradeOrder(
                             _pToken,
-                            buyOrders[_pToken][iBuy].owner,
+                            orders[_pToken][buyOrders[_pToken][iBuy]].owner,
                             iBuy
                         );
                     } else break;
                 }
             }
         }
+
+        filterOrders(_pToken);
+    }
+
+    function filterOrders(address _pToken) internal {
+        uint256 buyFilteredCount = 0;
+        for (uint256 iBuy = 0; iBuy < buyOrders[_pToken].length; iBuy++) {
+            if (orders[_pToken][buyOrders[_pToken][iBuy]].remainingAmount > 0) {
+                buyFilteredCount++;
+            }
+        }
+        uint256 buyCurrentIndex = 0;
+        uint256[] memory updateBuyOrders = new uint256[](buyFilteredCount);
+        for (uint256 iBuy = 0; iBuy < buyOrders[_pToken].length; iBuy++) {
+            if (orders[_pToken][buyOrders[_pToken][iBuy]].remainingAmount > 0) {
+                updateBuyOrders[buyCurrentIndex] = buyOrders[_pToken][iBuy];
+            }
+        }
+        buyOrders[_pToken] = updateBuyOrders;
+
+        uint256 sellFilteredCount = 0;
+        for (uint256 iSell = 0; iSell < sellOrders[_pToken].length; iSell++) {
+            if (
+                orders[_pToken][sellOrders[_pToken][iSell]].remainingAmount > 0
+            ) {
+                sellFilteredCount++;
+            }
+        }
+        uint256 sellCurrentIndex = 0;
+        uint256[] memory updateSellOrders = new uint256[](sellFilteredCount);
+        for (uint256 iSell = 0; iSell < sellOrders[_pToken].length; iSell++) {
+            if (
+                orders[_pToken][sellOrders[_pToken][iSell]].remainingAmount > 0
+            ) {
+                updateSellOrders[sellCurrentIndex] = sellOrders[_pToken][iSell];
+            }
+        }
+        sellOrders[_pToken] = updateSellOrders;
+    }
+
+    function cancelOrder(address _pToken, uint256 _orderId) external {
+        require(orders[_pToken][_orderId].owner == msg.sender, 'You are not owner of the order');
+        orders[_pToken][_orderId].isCancelled = true;
+        emit CancelOrder(
+            _pToken,
+            _orderId
+        );
     }
 
     function uint256ToString(

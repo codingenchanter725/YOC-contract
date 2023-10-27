@@ -15,7 +15,7 @@ module.exports = {
   networks: {
     hardhat: {
       forking: {
-        url: "https://rpc.ankr.com/eth_sepolia/",
+        url: "https://eth-sepolia.g.alchemy.com/v2/9XxUB2Hodsix6mDB_6uE4U-Ap6tg4c5c",
         blockNumber: 4203417
       },
     },
@@ -30,7 +30,7 @@ module.exports = {
       accounts: [privateKey]
     },
     sepolia: {
-      url: "https://rpc.ankr.com/eth_sepolia/8520362fc199056906a44b06b68b4efa1f09aeeaee96a8aa84d9c3e0f94c9eaf", // "https://ethereum-sepolia.blockpi.network/v1/rpc/public",
+      url: "https://rpc.ankr.com/eth_sepolia/", // "https://ethereum-sepolia.blockpi.network/v1/rpc/public",
       chainId: 11155111,
       accounts: [privateKey]
     },
