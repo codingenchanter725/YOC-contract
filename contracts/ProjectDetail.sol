@@ -3,6 +3,7 @@
 pragma solidity >=0.7.0 <0.9.0;
 
 interface IERC20 {
+    function symbol() external view returns (string memory);
     function decimals() external view returns (uint8);
     function sellAmount() external view returns (uint256);
     function balanceOf(address user) external view returns (uint256);
@@ -41,6 +42,7 @@ contract ProjectDetail {
     struct Detail {
         address shareToken;
         uint256 shareTokenDecimals;
+        string shareTokenSymbol;
         uint256 shareTokenSellAmount;
         uint256 shareTokenBalance;
         uint256 shareTokenBalanceTemp;
@@ -48,6 +50,7 @@ contract ProjectDetail {
         
         address investToken;
         uint256 investTokenDecimals;
+        string investTokenSymbol;
         uint256 investTokenBalance;
         uint256 investTokenAllowance;
 
@@ -110,12 +113,14 @@ contract ProjectDetail {
         Detail memory returnVal = Detail({
             shareToken: address(shareToken),
             shareTokenDecimals: shareToken.decimals(),
+            shareTokenSymbol: shareToken.symbol(),
             shareTokenSellAmount: shareToken.sellAmount(),
             shareTokenBalanceTemp: shareTokenBalanceOfProject,
             shareTokenBalance: shareTokenBalance,
             shareTokenAllowance: shareTokenAllowance,
             investToken: address(investToken),
             investTokenDecimals: investToken.decimals(),
+            investTokenSymbol: investToken.symbol(),
             investTokenBalance: investTokenBalance,
             investTokenAllowance: investTokenAllowance,
             title: project_.title(),
