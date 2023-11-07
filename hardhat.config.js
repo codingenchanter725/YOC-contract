@@ -15,7 +15,7 @@ module.exports = {
   networks: {
     hardhat: {
       forking: {
-        url: "https://rpc.ankr.com/eth_sepolia/",
+        url: "https://sepolia.infura.io/v3/f00540d3d0c846d093e61d939dd3be59",
         blockNumber: 4577193
       },
     },

@@ -222,7 +222,7 @@ contract ProjectTrade is SafeMath, Ownable {
         emit OrderCreated(
             _pToken,
             msg.sender,
-            orderId,
+            orders[_pToken].length - 1,
             _amount,
             _price,
             true
@@ -249,7 +249,7 @@ contract ProjectTrade is SafeMath, Ownable {
         orders[_pToken].push(newOrder);
         sellOrders[_pToken].push(0);
 
-        if (buyOrders[_pToken].length == 1) {
+        if (sellOrders[_pToken].length == 1) {
             PTokens.push(_pToken);
             emit AddNewProjectToken(_pToken, block.timestamp);
         }
@@ -277,7 +277,7 @@ contract ProjectTrade is SafeMath, Ownable {
         emit OrderCreated(
             _pToken,
             msg.sender,
-            orderId,
+            orders[_pToken].length - 1,
             _amount,
             _price,
             false
