@@ -15,8 +15,8 @@ module.exports = {
   networks: {
     hardhat: {
       forking: {
-        url: "https://sepolia.infura.io/v3/f00540d3d0c846d093e61d939dd3be59",
-        blockNumber: 4577193
+        url: "https://rpc.ankr.com/eth_sepolia/8520362fc199056906a44b06b68b4efa1f09aeeaee96a8aa84d9c3e0f94c9eaf",
+        blockNumber: 4649710
       },
     },
     bsctest: {
@@ -30,7 +30,7 @@ module.exports = {
       accounts: [privateKey]
     },
     sepolia: {
-      url: "https://rpc.ankr.com/eth_sepolia/", // "https://ethereum-sepolia.blockpi.network/v1/rpc/public",
+      url: "https://rpc.ankr.com/eth_sepolia/8520362fc199056906a44b06b68b4efa1f09aeeaee96a8aa84d9c3e0f94c9eaf", // "https://ethereum-sepolia.blockpi.network/v1/rpc/public",
       chainId: 11155111,
       accounts: [privateKey]
     },

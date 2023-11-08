@@ -128,10 +128,7 @@ contract ProjectTrade is SafeMath, Ownable {
         uint256 sellOrderId,
         uint256 timestamp
     );
-    event CancelOrder(
-        address pToken,
-        uint256 orderId
-    );
+    event CancelOrder(address pToken, uint256 orderId);
 
     constructor(address _YUSD, address _treasury) {
         YUSD = IERC20(_YUSD);
@@ -204,7 +201,7 @@ contract ProjectTrade is SafeMath, Ownable {
         // smaller order => 10, 9, 8, 7 ...
         uint256 orderId = buyOrders[_pToken].length - 1;
         if (buyOrders[_pToken].length > 1) {
-            for (uint256 i = buyOrders[_pToken].length - 1; i >= 0; i--) {
+            for (uint256 i = buyOrders[_pToken].length - 2; i >= 0; i--) {
                 if (
                     newOrder.orderPrice >=
                     orders[_pToken][buyOrders[_pToken][i]].orderPrice
@@ -212,7 +209,10 @@ contract ProjectTrade is SafeMath, Ownable {
                     orderId = i + 1;
                     break;
                 }
-                if (i == 0) orderId = 0;
+                if (i == 0) {
+                    orderId = 0;
+                    break;
+                }
             }
         }
         for (uint256 i = buyOrders[_pToken].length - 1; i > orderId; i--) {
@@ -257,7 +257,7 @@ contract ProjectTrade is SafeMath, Ownable {
         // bigger order => 1, 2, 3, 4 ...
         uint256 orderId = sellOrders[_pToken].length - 1;
         if (sellOrders[_pToken].length > 1) {
-            for (uint256 i = sellOrders[_pToken].length - 1; i >= 0; i--) {
+            for (uint256 i = sellOrders[_pToken].length - 2; i >= 0; i--) {
                 if (
                     newOrder.orderPrice >=
                     orders[_pToken][sellOrders[_pToken][i]].orderPrice
@@ -265,7 +265,10 @@ contract ProjectTrade is SafeMath, Ownable {
                     orderId = i + 1;
                     break;
                 }
-                if (i == 0) orderId = 0;
+                if (i == 0) {
+                    orderId = 0;
+                    break;
+                }
             }
         }
         for (uint256 i = sellOrders[_pToken].length - 1; i > orderId; i--) {
@@ -311,6 +314,9 @@ contract ProjectTrade is SafeMath, Ownable {
                             .isCancelled ==
                         true ||
                         orders[_pToken][sellOrders[_pToken][jSell]]
+                            .remainingAmount ==
+                        0 ||
+                        orders[_pToken][buyOrders[_pToken][iBuy]]
                             .remainingAmount ==
                         0
                     ) continue;
@@ -417,7 +423,7 @@ contract ProjectTrade is SafeMath, Ownable {
             }
         }
 
-        filterOrders(_pToken);
+        // filterOrders(_pToken);
     }
 
     function filterOrders(address _pToken) internal {
@@ -457,12 +463,12 @@ contract ProjectTrade is SafeMath, Ownable {
     }
 
     function cancelOrder(address _pToken, uint256 _orderId) external {
-        require(orders[_pToken][_orderId].owner == msg.sender, 'You are not owner of the order');
-        orders[_pToken][_orderId].isCancelled = true;
-        emit CancelOrder(
-            _pToken,
-            _orderId
+        require(
+            orders[_pToken][_orderId].owner == msg.sender,
+            "You are not owner of the order"
         );
+        orders[_pToken][_orderId].isCancelled = true;
+        emit CancelOrder(_pToken, _orderId);
     }
 
     function uint256ToString(

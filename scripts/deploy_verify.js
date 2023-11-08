@@ -97,13 +97,13 @@ async function main() {
     // await contractVerify(YUSD.address, 'ERC20_TOKEN', ["YUSD Token", "YUSD", 6]);
     // console.log("YUSD Complete!\n\n\n\n");
 
-    // const ProjectTradeFactory = await hre.ethers.getContractFactory("ProjectTrade");
-    // const ProjectTrade = await ProjectTradeFactory.deploy(YUSD.address, deployer.address);
-    // await ProjectTrade.deployed();
-    // console.log("ProjectTrade Address:", ProjectTrade.address);
-    // await ProjectTrade.deployTransaction.wait(5);
-    // await contractVerify(ProjectTrade.address, 'ProjectTrade', [YUSD.address, deployer.address]);
-    // console.log("ProjectTrade Complete!\n\n\n\n");
+    const ProjectTradeFactory = await hre.ethers.getContractFactory("ProjectTrade");
+    const ProjectTrade = await ProjectTradeFactory.deploy("0x99da355c817BC41413aE8D8771832271521aeac2", deployer.address);
+    await ProjectTrade.deployed();
+    console.log("ProjectTrade Address:", ProjectTrade.address);
+    await ProjectTrade.deployTransaction.wait(5);
+    await contractVerify(ProjectTrade.address, 'ProjectTrade', ["0x99da355c817BC41413aE8D8771832271521aeac2", deployer.address]);
+    console.log("ProjectTrade Complete!\n\n\n\n");
 
     // const TokenTemplateFactory = await hre.ethers.getContractFactory("TokenTemplate");
     // const TokenTemplateContract = await TokenTemplateFactory.deploy("YTEST Token", "YTEST", 10000 * 10 ** 6, 6, 6000 * 10 ** 6, deployer.address);
