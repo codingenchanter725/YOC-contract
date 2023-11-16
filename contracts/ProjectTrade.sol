@@ -380,8 +380,8 @@ contract ProjectTrade is SafeMath, Ownable {
                             sellPrice: orders[_pToken][
                                 sellOrders[_pToken][jSell]
                             ].orderPrice,
-                            buyOrderId: iBuy,
-                            sellOrderId: jSell,
+                            buyOrderId: buyOrders[_pToken][iBuy],
+                            sellOrderId: sellOrders[_pToken][jSell],
                             isCancelled: false,
                             timestamp: block.timestamp
                         });
@@ -398,26 +398,33 @@ contract ProjectTrade is SafeMath, Ownable {
                         emit TradeOrder(
                             _pToken,
                             orders[_pToken][sellOrders[_pToken][jSell]].owner,
-                            jSell
+                            sellOrders[_pToken][jSell]
                         );
+
+                        uint256 buyOrderId = buyOrders[_pToken][iBuy];
+                        uint256 sellOrderId = sellOrders[_pToken][jSell];
+                        address buyOrderOwner = orders[_pToken][buyOrderId]
+                            .owner;
+                        address sellOrderOwner = orders[_pToken][sellOrderId]
+                            .owner;
+                        uint256 transactionIndex = transactions[_pToken]
+                            .length - 1;
+                        Order memory sellOrder = orders[_pToken][sellOrderId];
+                        Order memory buyOrder = orders[_pToken][buyOrderId];
+
                         emit TradeTransaction(
                             _pToken,
                             tradeAmount,
-                            orders[_pToken][sellOrders[_pToken][jSell]]
-                                .orderPrice,
-                            transactions[_pToken].length - 1,
-                            orders[_pToken][sellOrders[_pToken][jSell]].owner,
-                            orders[_pToken][buyOrders[_pToken][iBuy]].owner,
-                            jSell,
-                            iBuy,
+                            sellOrder.orderPrice,
+                            transactionIndex,
+                            buyOrderOwner,
+                            sellOrderOwner,
+                            buyOrderId,
+                            sellOrderId,
                             block.timestamp
                         );
                         // event for Buyer
-                        emit TradeOrder(
-                            _pToken,
-                            orders[_pToken][buyOrders[_pToken][iBuy]].owner,
-                            iBuy
-                        );
+                        emit TradeOrder(_pToken, buyOrder.owner, buyOrderId);
                     } else break;
                 }
             }
@@ -468,6 +475,23 @@ contract ProjectTrade is SafeMath, Ownable {
             "You are not owner of the order"
         );
         orders[_pToken][_orderId].isCancelled = true;
+        if (orders[_pToken][_orderId].remainingAmount > 0) {
+            if (orders[_pToken][_orderId].isBuy == true) {
+                uint256 YUSDAmountWithFee = (((orders[_pToken][_orderId]
+                    .remainingAmount * orders[_pToken][_orderId].orderPrice) /
+                    (10 ** IERC20(_pToken).decimals())) *
+                    (PERCENT_PRECISION + FEE)) / PERCENT_PRECISION;
+                IERC20(YUSD).transfer(
+                    orders[_pToken][_orderId].owner,
+                    YUSDAmountWithFee
+                );
+            } else {
+                IERC20(_pToken).transfer(
+                    orders[_pToken][_orderId].owner,
+                    orders[_pToken][_orderId].remainingAmount
+                );
+            }
+        }
         emit CancelOrder(_pToken, _orderId);
     }
 
