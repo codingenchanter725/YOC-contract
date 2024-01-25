@@ -2,80 +2,60 @@
 
 pragma solidity >=0.7.0 <0.9.0;
 
-interface IERC20 {
-    function symbol() external view returns (string memory);
-    function decimals() external view returns (uint8);
-    function sellAmount() external view returns (uint256);
-    function balanceOf(address user) external view returns (uint256);
-    function name() external view returns (string memory);
-    function allowance(
-        address tokenOwner,
-        address spender
-    ) external view returns (uint256 remaining);
-}
-interface IProject {
-    function shareToken() external view returns (IERC20);
-    function investToken() external view returns (IERC20);
-    function title() external view returns (string memory);
-    function description() external view returns (string memory);
-    function category() external view returns (string memory);
-    function projectWebsite() external view returns (string memory);
-    function icon() external view returns (string memory);
-    function symbolImage() external view returns (string memory);
-    function shareTokenPrice() external view returns (uint256);
-    function roi() external view returns (uint256);
-    function apr() external view returns (uint256);
-    function startDate() external view returns (uint256);
-    function endDate() external view returns (uint256);
-    function ongoingPercent() external view returns (uint256);
-    function depositProfitAmount() external view returns (uint256);
-    function originProfitAmount() external view returns (uint256);
-    function sellAmount() external view returns (uint256);
-    function investTotalAmount() external view returns (uint256);
-    function profitWalletAmountCheck(address user) external view returns(bool, uint256, bool);
-}
-
-
+import "./interfaces/IProject.sol";
 
 contract ProjectDetail {
+    struct ShareTokenDetails {
+        address tokenAddress;
+        uint256 decimals;
+        string symbol;
+        uint256 totalSupply;
+        uint256 sellAmount;
+        uint256 allowance;
+        uint256 balance;
+        uint256 remainingBalanceOfProject;
+    }
 
-    struct Detail {
-        address shareToken;
-        uint256 shareTokenDecimals;
-        string shareTokenSymbol;
-        uint256 shareTokenSellAmount;
-        uint256 shareTokenBalance;
-        uint256 shareTokenBalanceTemp;
-        uint256 shareTokenAllowance;
-        
-        address investToken;
-        uint256 investTokenDecimals;
-        string investTokenSymbol;
-        uint256 investTokenBalance;
-        uint256 investTokenAllowance;
+    struct InvestTokenDetails {
+        address tokenAddress;
+        uint256 decimals;
+        string symbol;
+        uint256 balance;
+        uint256 allowance;
+        uint256 balanceInTradeOrder;
+    }
 
+    struct ProjectDetails {
         string title;
         string description;
         string category;
         string projectWebsite;
         string icon;
         string symbolImage;
-
         uint256 shareTokenPrice;
         uint256 roi;
-        uint256 apr;
-        uint256 startDate;  
+        uint256 startDate;
         uint256 endDate;
         uint256 ongoingPercent;
+        uint256 multiplier;
+        address projectWallet;
+        uint256 investTotalAmount;
+    }
 
+    struct ProfitDetails {
         uint256 depositProfitAmount;
         uint256 originProfitAmount;
-        uint256 sellAmount;
-        uint256 investTotalAmount;
-
         bool claimable;
         uint256 claimableAmount;
         bool joinState;
+        uint256 investEarnAmount;
+    }
+
+    struct Detail {
+        ShareTokenDetails shareToken;
+        InvestTokenDetails investToken;
+        ProjectDetails project;
+        ProfitDetails profit;
     }
 
     struct TokenDetail {
@@ -84,67 +64,59 @@ contract ProjectDetail {
         uint256 ownedBalance;
     }
 
-    constructor () {}
+    constructor() {}
 
     function getProjectDetails(
         IProject project_,
         address user_
     ) external view returns (Detail memory) {
-        IERC20 shareToken = project_.shareToken();
-        IERC20 investToken = project_.investToken();
+        IERC20 ShareToken = project_.shareToken();
+        IERC20 InvestToken = project_.investToken();
+        IProjectTrade ProjectTrade = project_.projectTrade();
 
-        uint256 shareTokenBalance = 0;
-        uint256 investTokenBalance = 0;
-        uint256 claimableAmount = 0;
-        uint256 shareTokenAllowance = 0;
-        uint256 investTokenAllowance = 0;
-        bool joinState = false;
-        bool claimable = false;
+        Detail memory detail;
+
+        detail.shareToken.tokenAddress = address(ShareToken);
+        detail.shareToken.decimals = ShareToken.decimals();
+        detail.shareToken.symbol = ShareToken.symbol();
+        detail.shareToken.totalSupply = ShareToken.totalSupply();
+        detail.shareToken.sellAmount = project_.sellAmount();
+        detail.shareToken.remainingBalanceOfProject = ShareToken.balanceOf(
+            address(project_)
+        );
+
+        detail.investToken.tokenAddress = address(InvestToken);
+        detail.investToken.decimals = InvestToken.decimals();
+        detail.investToken.symbol = InvestToken.symbol();
         if (user_ != address(0)) {
-            shareTokenBalance = shareToken.balanceOf(user_);
-            investTokenBalance = investToken.balanceOf(user_);
-            (claimable, claimableAmount, joinState) = project_.profitWalletAmountCheck(user_);
-            shareTokenAllowance = shareToken.allowance(address(user_), address(project_));
-            investTokenAllowance = investToken.allowance(address(user_), address(project_));
+            detail.shareToken.balance = ShareToken.balanceOf(user_);
+            detail.shareToken.allowance = ShareToken.allowance(
+                address(user_),
+                address(project_)
+            );
+
+            detail.investToken.balance = InvestToken.balanceOf(user_);
+            detail.investToken.allowance = InvestToken.allowance(
+                address(user_),
+                address(project_)
+            );
+            detail.investToken.balanceInTradeOrder = ProjectTrade
+                .getBalanceOfUserInContact(address(project_), address(user_));
+
+            bool joinState = false;
+            uint256 claimableAmount = 0;
+            bool claimable = false;
+            (claimable, claimableAmount, joinState) = project_
+                .profitWalletAmountCheck(user_);
+            detail.profit.claimable = claimable;
+            detail.profit.claimableAmount = claimableAmount;
+            detail.profit.joinState = joinState;
+            detail.profit.investEarnAmount = project_.investEarnAmountCheck(
+                address(user_)
+            );
         }
 
-        uint256 shareTokenBalanceOfProject = shareToken.balanceOf(address(project_));
-
-        Detail memory returnVal = Detail({
-            shareToken: address(shareToken),
-            shareTokenDecimals: shareToken.decimals(),
-            shareTokenSymbol: shareToken.symbol(),
-            shareTokenSellAmount: shareToken.sellAmount(),
-            shareTokenBalanceTemp: shareTokenBalanceOfProject,
-            shareTokenBalance: shareTokenBalance,
-            shareTokenAllowance: shareTokenAllowance,
-            investToken: address(investToken),
-            investTokenDecimals: investToken.decimals(),
-            investTokenSymbol: investToken.symbol(),
-            investTokenBalance: investTokenBalance,
-            investTokenAllowance: investTokenAllowance,
-            title: project_.title(),
-            description: project_.description(),
-            category: project_.category(),
-            projectWebsite: project_.projectWebsite(),
-            icon: project_.icon(),
-            symbolImage: project_.symbolImage(),
-            shareTokenPrice: project_.shareTokenPrice(),
-            roi: project_.roi(),
-            apr: project_.apr(),
-            startDate: project_.startDate(),
-            endDate: project_.endDate(),
-            ongoingPercent: project_.ongoingPercent(),
-            depositProfitAmount: project_.depositProfitAmount(),
-            originProfitAmount: project_.originProfitAmount(),
-            sellAmount: project_.sellAmount(),
-            investTotalAmount: project_.investTotalAmount(),
-            claimable: claimable,
-            claimableAmount: claimableAmount,
-            joinState: joinState
-        });
-
-        return returnVal;
+        return detail;
     }
 
     function getTokenInfo(
@@ -152,12 +124,12 @@ contract ProjectDetail {
         address[] memory users_
     ) external view returns (TokenDetail[] memory) {
         uint256 length = users_.length;
-        require (tokenAddr_ != address(0), "invalid token address");
-        require (length > 0, "no users");
+        require(tokenAddr_ != address(0), "invalid token address");
+        require(length > 0, "no users");
 
         TokenDetail[] memory infos = new TokenDetail[](length);
         IERC20 token = IERC20(tokenAddr_);
-        for (uint256 i = 0; i < length; i ++) {
+        for (uint256 i = 0; i < length; i++) {
             infos[i] = TokenDetail({
                 tokenName: token.name(),
                 owner: users_[i],
@@ -167,5 +139,4 @@ contract ProjectDetail {
 
         return infos;
     }
-
 }

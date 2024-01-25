@@ -4,44 +4,7 @@
 
 pragma solidity >=0.7.0 <0.9.0;
 
-// ----------------------------------------------------------------------------
-// ERC Token Standard #20 Interface
-//
-// ----------------------------------------------------------------------------
-interface IERC20 {
-    function totalSupply() external view returns (uint256);
-
-    function balanceOf(address tokenOwner)
-        external
-        view
-        returns (uint256 balance);
-
-    function allowance(address tokenOwner, address spender)
-        external
-        view
-        returns (uint256 remaining);
-
-    function transfer(address to, uint256 tokens)
-        external
-        returns (bool success);
-
-    function approve(address spender, uint256 tokens)
-        external
-        returns (bool success);
-
-    function transferFrom(
-        address from,
-        address to,
-        uint256 tokens
-    ) external returns (bool success);
-
-    event Transfer(address indexed from, address indexed to, uint256 tokens);
-    event Approval(
-        address indexed tokenOwner,
-        address indexed spender,
-        uint256 tokens
-    );
-}
+import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 
 // ----------------------------------------------------------------------------
 // Safe Math Library
@@ -105,22 +68,17 @@ contract TOKEN is IERC20, SafeMath {
     }
 
     // Returns the account balance of the address provided
-    function balanceOf(address tokenOwner)
-        external
-        view
-        override
-        returns (uint256 balance)
-    {
+    function balanceOf(
+        address tokenOwner
+    ) external view override returns (uint256 balance) {
         return balances[tokenOwner];
     }
 
     // Returns the amount which spender is still allowed to withdraw from my balance
-    function allowance(address tokenOwner, address spender)
-        external
-        view
-        override
-        returns (uint256 remaining)
-    {
+    function allowance(
+        address tokenOwner,
+        address spender
+    ) external view override returns (uint256 remaining) {
         return allowed[tokenOwner][spender];
     }
 
@@ -130,11 +88,10 @@ contract TOKEN is IERC20, SafeMath {
         For example: "Alice approves Uniswap to pull 100 USDT from her wallet." 
         And Uniswap is programed to take her USDT only at the moment when she's buying some other tokens against USDT.
     */
-    function approve(address spender, uint256 tokens)
-        external
-        override
-        returns (bool success)
-    {
+    function approve(
+        address spender,
+        uint256 tokens
+    ) external override returns (bool success) {
         // I as a msg.sender approve spender address these many tokens to use
         allowed[msg.sender][spender] = tokens;
         emit Approval(msg.sender, spender, tokens);
@@ -147,11 +104,10 @@ contract TOKEN is IERC20, SafeMath {
         Should throw error if caller's account balance doesn't have enough tokens
         Transfer of 0 should also be treated as a normal transaction
     */
-    function transfer(address to, uint256 tokens)
-        external
-        override
-        returns (bool success)
-    {
+    function transfer(
+        address to,
+        uint256 tokens
+    ) external override returns (bool success) {
         // Subtract tokens from callers balance
         balances[msg.sender] = safeSub(balances[msg.sender], tokens);
 

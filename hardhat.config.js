@@ -16,11 +16,11 @@ module.exports = {
     hardhat: {
       forking: {
         url: "https://rpc.ankr.com/eth_sepolia/8520362fc199056906a44b06b68b4efa1f09aeeaee96a8aa84d9c3e0f94c9eaf",
-        blockNumber: 4649710
+        blockNumber: 5138156
       },
     },
     bsctest: {
-      url: "https://rpc.ankr.com/bsc_testnet_chapel/8520362fc199056906a44b06b68b4efa1f09aeeaee96a8aa84d9c3e0f94c9eaf",
+      url: "https://rpc.ankr.com/bsc_testnet_chapel/",
       chainId: 97,//80001, //97,
       accounts: [privateKey],
     },

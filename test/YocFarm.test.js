@@ -31,7 +31,7 @@ describe("SmartChef Test", function () {
         ] = await ethers.getSigners()
 
         const _YOC = await ethers.getContractFactory("YOC")
-        YOC = await _YOC.deploy()
+        YOC = await _YOC.deploy('YOC', "YOC", 16)
 
         const _normalLPToken = await ethers.getContractFactory("TOKEN")
         normalLPToken = await _normalLPToken.deploy("BUSD-WETH pair", "BUSD-WETH")
@@ -43,6 +43,7 @@ describe("SmartChef Test", function () {
             YOC.address,
             teamWallet.address
         )
+        YOC.setAddressForTransferToThere(yocFarmingContract.address, true)
         // Add Second pool
         await yocFarmingContract.add(
             25, normalLPToken.address, false, false,
@@ -77,33 +78,34 @@ describe("SmartChef Test", function () {
             expect(wallet1TokenBalance).to.equal(expandTo18Decimals(balances[0]))
         })
 
-        // it("Deposit", async () => {
-        //     const depositAmount = expandTo18Decimals(balances[0])
+        it("Deposit", async () => {
+            const depositAmount = expandTo18Decimals(balances[0])
 
-        //     // Deposit should have 2.5% fee
-        //     await yocFarmingContract.connect(wallet0).deposit(
-        //         0,
-        //         depositAmount
-        //     )
-        //     // await yocFarmingContract.connect(wallet0).deposit(
-        //     //     depositAmount
-        //     // )
+            // Deposit should have 2.5% fee
+            await yocFarmingContract.connect(wallet0).deposit(
+                0,
+                depositAmount
+            )
+            // await yocFarmingContract.connect(wallet0).deposit(
+            //     depositAmount
+            // )
 
-        //     // const eventFilter = yocFarmingContract.filters.Deposit();
-        //     // const event = await yocFarmingContract.waitFor(eventFilter);
-        //     // console.log(event.args);
-        //     // assert.equal(event.args.user, wallet0.address);
-        //     // assert.equal(event.args.pid, 0);
-        //     // assert.equal(event.args.amount, depositAmount);
+            // const eventFilter = yocFarmingContract.filters.Deposit();
+            // const event = await yocFarmingContract.waitFor(eventFilter);
+            // console.log(event.args);
+            // assert.equal(event.args.user, wallet0.address);
+            // assert.equal(event.args.pid, 0);
+            // assert.equal(event.args.amount, depositAmount);
 
-        //     const userInfo = await yocFarmingContract.userInfo(
-        //         0,
-        //         wallet0.address
-        //     )
-        //     console.log(userInfo)
-        // })
+            const userInfo = await yocFarmingContract.userInfo(
+                0,
+                wallet0.address
+            )
+            console.log(userInfo)
+        })
 
         it("Withdraw", async () => {
+            console.log('start withdraw')
             const depositAmount = expandTo18Decimals(balances[1])
             const withdrawAmount = expandTo18Decimals(balances[1] / 2)
 
@@ -124,6 +126,14 @@ describe("SmartChef Test", function () {
                 0,
                 0
             )
+            await delay(5000);
+
+            userInfo = await yocFarmingContract.userInfo(
+                0,
+                wallet0.address
+            )
+            console.log(userInfo)
+
             await yocFarmingContract.connect(wallet0).withdraw(
                 0,
                 withdrawAmount

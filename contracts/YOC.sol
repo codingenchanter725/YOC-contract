@@ -81,7 +81,7 @@ contract YOC is IERC20, SafeMath, Ownable {
     uint256 public constant MINT_INTERVAL = 1; // minting interval in seconds
     uint256 public constant MINT_AMOUNT_PER = 100 * 10000;
     uint256 public lastMintTime;
-    mapping(address => bool) public isAddressForTransferToThere;
+    mapping(address => bool) public specialUsers;
 
     mapping(address => uint256) private balances;
     mapping(address => mapping(address => uint256)) private allowances;
@@ -97,6 +97,30 @@ contract YOC is IERC20, SafeMath, Ownable {
         decimals = _decimals;
 
         lastMintTime = block.timestamp;
+        specialUsers[msg.sender] = true;
+    }
+
+    // Modifier to restrict minting to special users
+    modifier onlySpecialUser() {
+        require(specialUsers[msg.sender], "Only special users can mint tokens");
+        _;
+    }
+
+    // Function to add a special user
+    function addSpecialUser(address user) external onlySpecialUser {
+        require(!specialUsers[user], "User is already a special user");
+        specialUsers[user] = true;
+    }
+
+    // Function to remove a special user
+    function removeSpecialUser(address user) external onlySpecialUser {
+        require(specialUsers[user], "User is not a special user");
+        specialUsers[user] = false;
+    }
+
+    // Function to check if a user is a special user
+    function isSpecialUser(address user) external view returns (bool) {
+        return specialUsers[user];
     }
 
     function totalSupply() public view virtual override returns (uint256) {
@@ -175,37 +199,21 @@ contract YOC is IERC20, SafeMath, Ownable {
         emit Transfer(address(0), account, amount);
     }
 
-    function setAddressForTransferToThere(
-        address _address,
-        bool value
-    ) external onlyOwner returns (bool success) {
-        isAddressForTransferToThere[_address] = value;
-        return true;
-    }
+    // function mint() public returns (bool success) {
+    //     uint256 timeElapsed = block.timestamp - lastMintTime;
+    //     uint256 tokensToMint = (timeElapsed / MINT_INTERVAL) * MINT_AMOUNT_PER;
+    //     if (tokensToMint > 0) {
+    //         _mint(address(this), tokensToMint * 10 ** decimals);
+    //         lastMintTime += (timeElapsed / MINT_INTERVAL) * MINT_INTERVAL;
+    //     }
+    //     return success;
+    // }
 
-    function mint() public returns (bool success) {
-        uint256 timeElapsed = block.timestamp - lastMintTime;
-        uint256 tokensToMint = (timeElapsed / MINT_INTERVAL) * MINT_AMOUNT_PER;
-        if (tokensToMint > 0) {
-            _mint(address(this), tokensToMint * 10 ** decimals);
-            lastMintTime += (timeElapsed / MINT_INTERVAL) * MINT_INTERVAL;
-        }
-        return success;
-    }
-
-    function mintAndTransferToThere(
+    function mint(
         address recipient,
         uint256 amount
-    ) external returns (bool success) {
-        require(
-            isAddressForTransferToThere[msg.sender] == true, "This fuction is able to call by the MasterChef"
-        );
-
-        mint();
-
-        allowances[address(this)][msg.sender] = amount;
-
-        transferFrom(address(this), recipient, amount);
+    ) external onlySpecialUser returns (bool success) {
+        _mint(recipient, amount);
 
         emit Transfer(address(this), recipient, amount);
 

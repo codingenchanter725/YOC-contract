@@ -3,43 +3,35 @@
 pragma solidity ^0.8.6;
 pragma experimental ABIEncoderV2;
 
-import "@openzeppelin/contracts/access/Ownable.sol";
 import "@openzeppelin/contracts/utils/math/SafeMath.sol";
 import "@openzeppelin/contracts/security/ReentrancyGuard.sol";
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
+import "./interfaces/IYOC.sol";
 
-interface IYOC {
-    event Transfer(address indexed from, address indexed to, uint256 value);
-    event Approval(
-        address indexed owner,
-        address indexed spender,
-        uint256 value
-    );
+contract Ownable {
+    address public owner;
+    mapping(address => bool) public authorized;
 
-    function totalSupply() external view returns (uint256);
+    modifier onlyOwner() {
+        require(
+            msg.sender == owner || authorized[msg.sender],
+            "Only owner or authorized addresses can call this function"
+        );
+        _;
+    }
 
-    function balanceOf(address account) external view returns (uint256);
+    constructor() {
+        owner = msg.sender;
+    }
 
-    function transfer(address to, uint256 amount) external returns (bool);
+    function addAuthorized(address _address) external onlyOwner {
+        authorized[_address] = true;
+    }
 
-    function allowance(
-        address owner,
-        address spender
-    ) external view returns (uint256);
-
-    function approve(address spender, uint256 amount) external returns (bool);
-
-    function transferFrom(
-        address from,
-        address to,
-        uint256 amount
-    ) external returns (bool);
-
-    function mintAndTransferToThere(
-        address to,
-        uint256 amount
-    ) external returns (bool);
+    function removeAuthorized(address _address) external onlyOwner {
+        authorized[_address] = false;
+    }
 }
 
 contract YOCMasterChef is Ownable, ReentrancyGuard {
@@ -68,10 +60,12 @@ contract YOCMasterChef is Ownable, ReentrancyGuard {
     mapping(uint256 => mapping(address => UserInfo)) public userInfo;
 
     address public treasury; // For receiving the fees.
+    uint256 public treasuryFee;
 
     uint256 public totalAllocPoint;
     uint256 public constant ACC_YOC_PRECISION = 1e18;
-    uint256 public constant MASTERCHEF_YOC_PER_BLOCK = 20000 * ACC_YOC_PRECISION;
+    uint256 public constant MASTERCHEF_YOC_PER_BLOCK =
+        20000 * ACC_YOC_PRECISION;
 
     uint256 public constant DEPOSIT_FEE = 19;
     uint256 public constant WITHDRAW_FEE = 19;
@@ -107,6 +101,7 @@ contract YOCMasterChef is Ownable, ReentrancyGuard {
     constructor(IYOC _YOC, address _treasury) {
         YOC = _YOC;
         treasury = _treasury;
+        treasuryFee = 20;
     }
 
     function poolLength() public view returns (uint256 pools) {
@@ -194,7 +189,11 @@ contract YOCMasterChef is Ownable, ReentrancyGuard {
                 .mul(pool.allocPoint)
                 .div(totalAllocPoint);
             accYocPerShare = accYocPerShare.add(
-                yocReward.mul(ACC_YOC_PRECISION).div(lpSupply)
+                yocReward
+                    .mul(ACC_YOC_PRECISION)
+                    .div(lpSupply)
+                    .mul(100 - treasuryFee)
+                    .div(100)
             );
         }
 
@@ -230,7 +229,13 @@ contract YOCMasterChef is Ownable, ReentrancyGuard {
                     .mul(pool.allocPoint)
                     .div(totalAllocPoint);
                 pool.accYocPerShare = pool.accYocPerShare.add(
-                    (yocReward.mul(ACC_YOC_PRECISION).div(lpSupply))
+                    (
+                        yocReward
+                            .mul(ACC_YOC_PRECISION)
+                            .div(lpSupply)
+                            .mul(100 - treasuryFee)
+                            .div(100)
+                    )
                 );
             }
             pool.lastRewardBlock = block.number;
@@ -284,7 +289,7 @@ contract YOCMasterChef is Ownable, ReentrancyGuard {
     /// @notice Withdraw LP tokens from pool.
     /// @param _pid The id of the pool. See `poolInfo`.
     /// @param _amount Amount of LP tokens to withdraw.
-    function withdraw(uint256 _pid, uint256 _amount) external nonReentrant {
+    function withdraw(uint256 _pid, uint256 _amount) public nonReentrant {
         PoolInfo memory pool = updatePool(_pid);
         UserInfo storage user = userInfo[_pid][msg.sender];
 
@@ -313,6 +318,11 @@ contract YOCMasterChef is Ownable, ReentrancyGuard {
         poolInfo[_pid].totalShare = poolInfo[_pid].totalShare.sub(_amount);
 
         emit Withdraw(msg.sender, _pid, _amount, yocAmount);
+    }
+
+    function withdrawAll(uint256 _pid) external {
+        UserInfo storage user = userInfo[_pid][msg.sender];
+        withdraw(_pid, user.amount);
     }
 
     /// @notice Withdraw without caring about the rewards. EMERGENCY ONLY.
@@ -345,8 +355,11 @@ contract YOCMasterChef is Ownable, ReentrancyGuard {
             ACC_YOC_PRECISION
         );
         uint256 pending = accYOC.sub(user.rewardDebt);
-
+        uint256 pendingTreasury = pending.mul(treasuryFee).div(
+            100 - treasuryFee
+        );
         _safeTransfer(_user, pending);
+        _safeTransfer(treasury, pendingTreasury);
 
         return pending;
     }
@@ -356,7 +369,7 @@ contract YOCMasterChef is Ownable, ReentrancyGuard {
     /// @param _amount transfer YOC amounts.
     function _safeTransfer(address _to, uint256 _amount) public {
         if (_amount > 0) {
-            YOC.mintAndTransferToThere(_to, _amount);
+            YOC.mint(_to, _amount);
         }
     }
 }

@@ -81,8 +81,7 @@ contract ProjectTrade is SafeMath, Ownable {
 
     struct Transaction {
         uint256 amount;
-        uint256 buyPrice;
-        uint256 sellPrice;
+        uint256 price;
         uint256 buyOrderId;
         uint256 sellOrderId;
         uint256 timestamp;
@@ -105,6 +104,9 @@ contract ProjectTrade is SafeMath, Ownable {
     mapping(address => Order[]) public orders;
     mapping(address => uint256[]) public buyOrders;
     mapping(address => uint256[]) public sellOrders;
+    mapping(address => mapping(address => uint256))
+        public balanceOfUserInContract;
+    mapping(address => bool) _pause;
 
     event OrderCreated(
         address pToken,
@@ -129,6 +131,9 @@ contract ProjectTrade is SafeMath, Ownable {
         uint256 timestamp
     );
     event CancelOrder(address pToken, uint256 orderId);
+    event Pause(address pToken);
+    event CancelAllOrders(address pToken);
+    event RemoveAllOrders(address pToken);
 
     constructor(address _YUSD, address _treasury) {
         YUSD = IERC20(_YUSD);
@@ -145,6 +150,15 @@ contract ProjectTrade is SafeMath, Ownable {
         uint256 _price
     ) external onlyOwner {
         setPrice(_pToken, _price);
+    }
+
+    function pause(address _pToken) public onlyOwner {
+        _pause[_pToken] = true;
+        emit Pause(_pToken);
+    }
+
+    function unpause(address _pToken) public onlyOwner {
+        _pause[_pToken] = false;
     }
 
     function getBuyOrders(
@@ -203,7 +217,7 @@ contract ProjectTrade is SafeMath, Ownable {
         if (buyOrders[_pToken].length > 1) {
             for (uint256 i = buyOrders[_pToken].length - 2; i >= 0; i--) {
                 if (
-                    newOrder.orderPrice >=
+                    newOrder.orderPrice <=
                     orders[_pToken][buyOrders[_pToken][i]].orderPrice
                 ) {
                     orderId = i + 1;
@@ -228,13 +242,31 @@ contract ProjectTrade is SafeMath, Ownable {
             true
         );
 
-        processOrder(_pToken);
+        // processOrder(_pToken);
+        uint256 tSellOrderId = 0;
+        uint256 tBuyOrderId = orders[_pToken].length - 1;
+        for (uint256 i = 0; i < sellOrders[_pToken].length; i++) {
+            tSellOrderId = sellOrders[_pToken][i];
+            if (
+                orders[_pToken][tSellOrderId].isCancelled == true ||
+                orders[_pToken][tSellOrderId].remainingAmount == 0 ||
+                orders[_pToken][tBuyOrderId].remainingAmount == 0
+            ) continue;
+
+            if (
+                orders[_pToken][tSellOrderId].orderPrice <=
+                orders[_pToken][tBuyOrderId].orderPrice
+            ) {
+                processOrder(_pToken, tBuyOrderId, tSellOrderId);
+            } else break;
+        }
     }
 
     function sell(address _pToken, uint256 _amount, uint256 _price) external {
         require(_amount > 0, "invalid amount");
 
         IERC20(_pToken).transferFrom(msg.sender, address(this), _amount);
+        balanceOfUserInContract[_pToken][msg.sender] += _amount;
 
         Order memory newOrder = Order({
             owner: msg.sender,
@@ -285,10 +317,117 @@ contract ProjectTrade is SafeMath, Ownable {
             _price,
             false
         );
-        processOrder(_pToken);
+
+        // // processOrder(_pToken);
+        uint256 tBuyOrderId = 0;
+        uint256 tSellOrderId = orders[_pToken].length - 1;
+        for (uint256 i = 0; i < buyOrders[_pToken].length; i++) {
+            tBuyOrderId = buyOrders[_pToken][i];
+            if (
+                orders[_pToken][tBuyOrderId].isCancelled == true ||
+                orders[_pToken][tBuyOrderId].remainingAmount == 0 ||
+                orders[_pToken][tSellOrderId].remainingAmount == 0
+            ) continue;
+
+            if (
+                orders[_pToken][tBuyOrderId].orderPrice >=
+                orders[_pToken][tSellOrderId].orderPrice
+            ) {
+                processOrder(_pToken, tBuyOrderId, tSellOrderId);
+            } else break;
+        }
     }
 
-    function processOrder(address _pToken) internal {
+    function processOrder(
+        address _pToken,
+        uint256 tBuyOrderId,
+        uint256 tSellOrderId
+    ) internal {
+        uint256 tradeAmount = 0;
+        if (
+            orders[_pToken][tBuyOrderId].remainingAmount <=
+            orders[_pToken][tSellOrderId].remainingAmount
+        ) {
+            tradeAmount = orders[_pToken][tBuyOrderId].remainingAmount;
+        } else {
+            tradeAmount = orders[_pToken][tSellOrderId].remainingAmount;
+        }
+
+        address sellOrderOwner = orders[_pToken][tSellOrderId].owner;
+        address buyOrderOwner = orders[_pToken][tBuyOrderId].owner;
+
+        IERC20(_pToken).transfer(buyOrderOwner, tradeAmount);
+        orders[_pToken][tBuyOrderId].remainingAmount -= tradeAmount;
+        orders[_pToken][tSellOrderId].remainingAmount -= tradeAmount;
+
+        uint256 tradePrice = orders[_pToken][tSellOrderId].orderPrice;
+        if (
+            orders[_pToken][tBuyOrderId].timestamp <
+            orders[_pToken][tSellOrderId].timestamp
+        ) {
+            // buyer order's priority is higher, trade price is buyer order's price, seller will get full YUSD what buyer paid
+            setPrice(_pToken, tradePrice);
+            // calculate fee
+            uint256 paidYUSDAmount = (((tradeAmount * tradePrice) /
+                (10 ** IERC20(_pToken).decimals())) *
+                (PERCENT_PRECISION - FEE)) / PERCENT_PRECISION;
+
+            YUSD.transfer(sellOrderOwner, paidYUSDAmount);
+        } else {
+            // seller order's priority is higher, the rest amount will be retieved to the buyer.
+            setPrice(_pToken, tradePrice);
+            // calculate fee
+            uint256 paidYUSDAmount = (((tradeAmount * tradePrice) /
+                (10 ** IERC20(_pToken).decimals())) *
+                (PERCENT_PRECISION - FEE)) / PERCENT_PRECISION;
+
+            YUSD.transfer(sellOrderOwner, paidYUSDAmount);
+
+            if (tradePrice < orders[_pToken][tBuyOrderId].orderPrice) {
+                uint256 retrievedYUSDAmount = (((tradeAmount *
+                    (orders[_pToken][tBuyOrderId].orderPrice - tradePrice)) /
+                    (10 ** IERC20(_pToken).decimals())) *
+                    (PERCENT_PRECISION + FEE)) / PERCENT_PRECISION;
+                YUSD.transfer(buyOrderOwner, retrievedYUSDAmount);
+            }
+        }
+
+        // require(false, concatStrings("ddd", uint256ToString(paidYUSDAmount)));
+
+        Transaction memory newTransaction = Transaction({
+            amount: tradeAmount,
+            price: tradePrice,
+            buyOrderId: tBuyOrderId,
+            sellOrderId: tSellOrderId,
+            isCancelled: false,
+            timestamp: block.timestamp
+        });
+        transactions[_pToken].push(newTransaction);
+        uint256 transactionId = transactions[_pToken].length - 1;
+
+        orders[_pToken][tBuyOrderId].transactionIds.push(transactionId);
+        orders[_pToken][tSellOrderId].transactionIds.push(transactionId);
+
+        // event for Seller
+        emit TradeOrder(_pToken, sellOrderOwner, tSellOrderId);
+        balanceOfUserInContract[_pToken][sellOrderOwner] -= tradeAmount;
+        // event for Buyer
+        emit TradeOrder(_pToken, buyOrderOwner, tBuyOrderId);
+
+        emit TradeTransaction(
+            _pToken,
+            tradeAmount,
+            tradePrice,
+            transactionId,
+            buyOrderOwner,
+            sellOrderOwner,
+            tBuyOrderId,
+            tSellOrderId,
+            block.timestamp
+        );
+    }
+
+    function processOrderdd(address _pToken) internal {
         for (uint256 iSell = 0; iSell < sellOrders[_pToken].length; iSell++) {
             if (
                 orders[_pToken][sellOrders[_pToken][iSell]].isCancelled ==
@@ -342,44 +481,91 @@ contract ProjectTrade is SafeMath, Ownable {
                             ].remainingAmount;
                         }
 
-                        setPrice(
-                            _pToken,
-                            orders[_pToken][sellOrders[_pToken][jSell]]
-                                .orderPrice
-                        );
-
                         IERC20(_pToken).transfer(
                             orders[_pToken][buyOrders[_pToken][iBuy]].owner,
                             tradeAmount
                         );
-                        // calculate fee
-                        uint256 paidYUSDAmount = (((tradeAmount *
-                            orders[_pToken][buyOrders[_pToken][iBuy]]
-                                .orderPrice) /
-                            (10 ** IERC20(_pToken).decimals())) *
-                            (PERCENT_PRECISION - FEE)) / PERCENT_PRECISION;
-
-                        YUSD.transfer(
-                            orders[_pToken][sellOrders[_pToken][jSell]].owner,
-                            paidYUSDAmount
-                        );
-                        // require(
-                        //     false,
-                        //     concatStrings("ddd", uint256ToString(paidYUSDAmount))
-                        // );
-
                         orders[_pToken][sellOrders[_pToken][jSell]]
                             .remainingAmount -= tradeAmount;
                         orders[_pToken][buyOrders[_pToken][iBuy]]
                             .remainingAmount -= tradeAmount;
 
+                        if (
+                            orders[_pToken][buyOrders[_pToken][iBuy]]
+                                .timestamp <
+                            orders[_pToken][sellOrders[_pToken][jSell]]
+                                .timestamp
+                        ) {
+                            // buyer order's priority is higher, trade price is buyer order's price, seller will get full YUSD what buyer paid
+                            setPrice(
+                                _pToken,
+                                orders[_pToken][buyOrders[_pToken][iBuy]]
+                                    .orderPrice
+                            );
+                            // calculate fee
+                            uint256 paidYUSDAmount = (((tradeAmount *
+                                orders[_pToken][buyOrders[_pToken][iBuy]]
+                                    .orderPrice) /
+                                (10 ** IERC20(_pToken).decimals())) *
+                                (PERCENT_PRECISION - FEE)) / PERCENT_PRECISION;
+
+                            YUSD.transfer(
+                                orders[_pToken][sellOrders[_pToken][jSell]]
+                                    .owner,
+                                paidYUSDAmount
+                            );
+                        } else {
+                            // seller order's priority is higher, the rest amount will be retieved to the buyer.
+                            setPrice(
+                                _pToken,
+                                orders[_pToken][sellOrders[_pToken][jSell]]
+                                    .orderPrice
+                            );
+                            // calculate fee
+                            uint256 paidYUSDAmount = (((tradeAmount *
+                                orders[_pToken][sellOrders[_pToken][jSell]]
+                                    .orderPrice) /
+                                (10 ** IERC20(_pToken).decimals())) *
+                                (PERCENT_PRECISION - FEE)) / PERCENT_PRECISION;
+
+                            YUSD.transfer(
+                                orders[_pToken][sellOrders[_pToken][jSell]]
+                                    .owner,
+                                paidYUSDAmount
+                            );
+
+                            if (
+                                orders[_pToken][sellOrders[_pToken][jSell]]
+                                    .orderPrice <
+                                orders[_pToken][buyOrders[_pToken][iBuy]]
+                                    .orderPrice
+                            ) {
+                                uint256 retrievedYUSDAmount = (((tradeAmount *
+                                    (orders[_pToken][buyOrders[_pToken][iBuy]]
+                                        .orderPrice -
+                                        orders[_pToken][
+                                            sellOrders[_pToken][jSell]
+                                        ].orderPrice)) /
+                                    (10 ** IERC20(_pToken).decimals())) *
+                                    (PERCENT_PRECISION + FEE)) /
+                                    PERCENT_PRECISION;
+
+                                YUSD.transfer(
+                                    orders[_pToken][buyOrders[_pToken][iBuy]]
+                                        .owner,
+                                    retrievedYUSDAmount
+                                );
+                            }
+                        }
+
+                        // require(
+                        //     false,
+                        //     concatStrings("ddd", uint256ToString(paidYUSDAmount))
+                        // );
+
                         Transaction memory newTransaction = Transaction({
                             amount: tradeAmount,
-                            buyPrice: orders[_pToken][buyOrders[_pToken][iBuy]]
-                                .orderPrice,
-                            sellPrice: orders[_pToken][
-                                sellOrders[_pToken][jSell]
-                            ].orderPrice,
+                            price: price[_pToken],
                             buyOrderId: buyOrders[_pToken][iBuy],
                             sellOrderId: sellOrders[_pToken][jSell],
                             isCancelled: false,
@@ -400,31 +586,27 @@ contract ProjectTrade is SafeMath, Ownable {
                             orders[_pToken][sellOrders[_pToken][jSell]].owner,
                             sellOrders[_pToken][jSell]
                         );
-
-                        uint256 buyOrderId = buyOrders[_pToken][iBuy];
-                        uint256 sellOrderId = sellOrders[_pToken][jSell];
-                        address buyOrderOwner = orders[_pToken][buyOrderId]
-                            .owner;
-                        address sellOrderOwner = orders[_pToken][sellOrderId]
-                            .owner;
-                        uint256 transactionIndex = transactions[_pToken]
-                            .length - 1;
-                        Order memory sellOrder = orders[_pToken][sellOrderId];
-                        Order memory buyOrder = orders[_pToken][buyOrderId];
+                        balanceOfUserInContract[_pToken][
+                            orders[_pToken][sellOrders[_pToken][jSell]].owner
+                        ] -= tradeAmount;
+                        // event for Buyer
+                        emit TradeOrder(
+                            _pToken,
+                            orders[_pToken][buyOrders[_pToken][iBuy]].owner,
+                            buyOrders[_pToken][iBuy]
+                        );
 
                         emit TradeTransaction(
                             _pToken,
                             tradeAmount,
-                            sellOrder.orderPrice,
-                            transactionIndex,
-                            buyOrderOwner,
-                            sellOrderOwner,
-                            buyOrderId,
-                            sellOrderId,
+                            price[_pToken],
+                            transactions[_pToken].length - 1,
+                            orders[_pToken][buyOrders[_pToken][iBuy]].owner,
+                            orders[_pToken][sellOrders[_pToken][jSell]].owner,
+                            buyOrders[_pToken][iBuy],
+                            sellOrders[_pToken][jSell],
                             block.timestamp
                         );
-                        // event for Buyer
-                        emit TradeOrder(_pToken, buyOrder.owner, buyOrderId);
                     } else break;
                 }
             }
@@ -469,9 +651,10 @@ contract ProjectTrade is SafeMath, Ownable {
         sellOrders[_pToken] = updateSellOrders;
     }
 
-    function cancelOrder(address _pToken, uint256 _orderId) external {
+    function cancelOrder(address _pToken, uint256 _orderId) public {
         require(
-            orders[_pToken][_orderId].owner == msg.sender,
+            orders[_pToken][_orderId].owner == msg.sender ||
+                msg.sender == owner(),
             "You are not owner of the order"
         );
         orders[_pToken][_orderId].isCancelled = true;
@@ -495,59 +678,55 @@ contract ProjectTrade is SafeMath, Ownable {
         emit CancelOrder(_pToken, _orderId);
     }
 
-    function uint256ToString(
-        uint256 value
-    ) internal pure returns (string memory) {
-        if (value == 0) {
-            return "0";
-        }
-        uint256 temp = value;
-        uint256 digits;
-        while (temp != 0) {
-            digits++;
-            temp /= 10;
-        }
-        bytes memory buffer = new bytes(digits);
-        while (value != 0) {
-            digits -= 1;
-            buffer[digits] = bytes1(uint8(48 + uint256(value % 10)));
-            value /= 10;
-        }
-        return string(buffer);
+    function getBalanceOfUserInContact(
+        address _pToken,
+        address _user
+    ) public view returns (uint256) {
+        return balanceOfUserInContract[_pToken][_user];
     }
 
-    function concatStrings(
-        string memory a,
-        string memory b
-    ) public pure returns (string memory) {
-        bytes memory ba = bytes(a);
-        bytes memory bb = bytes(b);
-        bytes memory result = new bytes(ba.length + bb.length);
-        for (uint i = 0; i < ba.length; i++) {
-            result[i] = ba[i];
+    function cancelOrders(address _pToken) external {
+        for (uint256 i = 0; i < orders[_pToken].length; i++) {
+            if (orders[_pToken][i].isCancelled == false) {
+                cancelOrder(_pToken, i);
+            }
         }
-        for (uint i = 0; i < bb.length; i++) {
-            result[ba.length + i] = bb[i];
-        }
-        return string(result);
+        emit CancelAllOrders(_pToken);
     }
 
-    function addressToString(
-        address _address
-    ) public pure returns (string memory) {
-        bytes memory _bytes = abi.encodePacked(_address);
-        return bytesToHexString(_bytes);
+    function removeOrders(address _pToken) external {
+        for (uint256 i = 0; i < orders[_pToken].length; i++) {
+            removeOrder(_pToken, i);
+        }
+        delete orders[_pToken];
+        delete buyOrders[_pToken];
+        delete sellOrders[_pToken];
+        emit RemoveAllOrders(_pToken);
     }
 
-    function bytesToHexString(
-        bytes memory _bytes
-    ) public pure returns (string memory) {
-        bytes memory _hexChars = "0123456789abcdef";
-        bytes memory _hexString = new bytes(_bytes.length * 2);
-        for (uint256 i = 0; i < _bytes.length; i++) {
-            _hexString[i * 2] = _hexChars[uint8(_bytes[i] >> 4)];
-            _hexString[i * 2 + 1] = _hexChars[uint8(_bytes[i] & 0x0f)];
+    function removeOrder(address _pToken, uint256 _orderId) internal {
+        require(
+            orders[_pToken][_orderId].owner == msg.sender ||
+                msg.sender == owner(),
+            "You are not owner of the order"
+        );
+        if (orders[_pToken][_orderId].remainingAmount > 0) {
+            if (orders[_pToken][_orderId].isCancelled) return;
+            if (orders[_pToken][_orderId].isBuy == true) {
+                uint256 YUSDAmountWithFee = (((orders[_pToken][_orderId]
+                    .remainingAmount * orders[_pToken][_orderId].orderPrice) /
+                    (10 ** IERC20(_pToken).decimals())) *
+                    (PERCENT_PRECISION + FEE)) / PERCENT_PRECISION;
+                IERC20(YUSD).transfer(
+                    orders[_pToken][_orderId].owner,
+                    YUSDAmountWithFee
+                );
+            } else {
+                IERC20(_pToken).transfer(
+                    orders[_pToken][_orderId].owner,
+                    orders[_pToken][_orderId].remainingAmount
+                );
+            }
         }
-        return string(_hexString);
     }
 }

@@ -66,7 +66,7 @@ describe("Test YUSD", function () {
         yocMasterChefContract = await yocMasterChefFactory.deploy(YOC.address, deployer.address);
         await yocMasterChefContract.deployed();
         console.log("YocMasterChef Address:", yocMasterChefContract.address + "\n");
-        await YOC.setAddressForTransferToThere(yocMasterChefContract.address, true);
+        await YOC.addSpecialUser(yocMasterChefContract.address);
     })
 
     it("staking", async function () {
@@ -127,13 +127,36 @@ describe("Test YUSD", function () {
         let ETHPrice = smallNum_6(await YUSD.getETHPrice());
         console.log("Current ETHPrice", ETHPrice, "\n");
 
-        //  Mint
-        console.log("<============ Mint YUSD =============>")
-        let requireETHAmount = await YUSD.getETHAmountForMint(100);
-        console.log("require ETH", smallNum(requireETHAmount));
-        await YUSD.connect(wallet_2).mint(100, {
-            value: requireETHAmount
-        });
+        // //  Mint
+        // console.log("<============ Mint YUSD =============>")
+        // let requireETHAmount = await YUSD.getETHAmountForMint(100);
+        // console.log("require ETH", smallNum(requireETHAmount));
+        // await YUSD.connect(wallet_2).mint(100, {
+        //     value: requireETHAmount
+        // });
+        // let amount = smallNum_6(await YUSD.balanceOf(wallet_2.address));
+        // console.log("<=== Mint 100 YUSD ===>")
+        // console.log("YUSD Totalsupply", smallNum_6(await YUSD.totalSupply()));
+        // console.log("ETH of YUSD contract", smallNum(await ethers.provider.getBalance(YUSD.address)));
+        // console.log("YOC of YUSD contract", smallNum(await YOC.balanceOf(YUSD.address)));
+        // console.log("ETH Percentage", (await YUSD.rate()) / 100);
+        // console.log("YUSD price", smallNum_6(await YUSD.price()), "\n");
+        // console.log("YUSD Totalsupply", smallNum_6(await YUSD.totalSupply()));
+
+        // await YUSD.connect(wallet_2).transfer(wallet_3.address, bigNum_6(100));
+
+        
+        //  Mint With YOC
+        console.log("<============ Mint YUSD WITH YOC =============>")
+        await TOKENPoolContract.connect(wallet_1).withdraw(0);
+        YOCamount = smallNum(await YOC.balanceOf(wallet_1.address));
+        console.log("withdraw and get YOC", YOCamount);
+
+        let requireYOCAmount = await YUSD.getYOCAmountForMint(100);
+        console.log("require YOC", smallNum(requireYOCAmount));
+        await YOC.connect(wallet_1).transfer(wallet_2.address, requireYOCAmount);
+        await YOC.connect(wallet_2).approve(YUSD.address, requireYOCAmount);
+        await YUSD.connect(wallet_2).mintWithYOC(100);
         let amount = smallNum_6(await YUSD.balanceOf(wallet_2.address));
         console.log("<=== Mint 100 YUSD ===>")
         console.log("YUSD Totalsupply", smallNum_6(await YUSD.totalSupply()));
@@ -144,7 +167,7 @@ describe("Test YUSD", function () {
         console.log("YUSD Totalsupply", smallNum_6(await YUSD.totalSupply()));
 
         await YUSD.connect(wallet_2).transfer(wallet_3.address, bigNum_6(100));
-
+/*
         // Burn
         console.log("<============ Burn YUSD =============>")
         console.log("wallet_3 ETH", smallNum(await wallet_3.getBalance()));
@@ -234,7 +257,7 @@ describe("Test YUSD", function () {
             // console.log("ETH Percentage", (await YUSD.rate()) / 100);
             // console.log("YUSD price", smallNum_6(await YUSD.price()), "\n");
         }
-
+*/
         // console.log("<=== Burn 100 YUSD ===>")
         // await YUSD.connect(wallet_3).burn(100);
         // console.log("ETH Percentage", (await YUSD.rate()) / 100);

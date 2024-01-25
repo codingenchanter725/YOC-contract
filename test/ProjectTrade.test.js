@@ -6,7 +6,7 @@ const { erc20_abi } = require('../external_abi/erc20.abi.json');
 
 const bigNum = num => (num + '0'.repeat(18));
 const smallNum = num => (parseInt(num) / bigNum(1));
-const bigNum_6 = num => (num + '0'.repeat(6));
+const bigNum_6 = num => (num * Math.pow(10, 6)) + "";
 const smallNum_6 = num => (parseInt(num) / bigNum_6(1));
 
 const overrides = {
@@ -40,17 +40,21 @@ describe("Test ProjectTrade Contract", function () {
 		ProjectTrade = await _ProjectTrade.deploy(YUSD.address, wallet_tresury.address);
 		await ProjectTrade.deployed();
 
-		await PToken.transfer(wallet_1.address, bigNum(10000));
-		await YUSD.transfer(wallet_1.address, bigNum_6(10000));
+		await PToken.transfer(wallet_1.address, bigNum(1000000));
+		await YUSD.transfer(wallet_2.address, bigNum_6(1000000));
 	})
 
 	it("Sell and Buy", async function () {
-		console.log("<=== Sell 1000 PToken for 90 YUSD ===>");
-		await PToken.connect(wallet_1).approve(ProjectTrade.address, bigNum(1000));
-		console.log("PToken Amount:", smallNum(await PToken.balanceOf(wallet_1.address)));
-		await ProjectTrade.connect(wallet_1).sell(PToken.address, bigNum(1000), bigNum_6(90));
-		console.log("PToken Amount:", smallNum(await PToken.balanceOf(wallet_1.address)));
-		console.log("PToken of Trade Contract Amount:", smallNum(await PToken.balanceOf(ProjectTrade.address)));
+		// console.log("<=== Sell 1000 PToken for 90 YUSD ===>");
+		await PToken.connect(wallet_1).approve(ProjectTrade.address, bigNum(1000000));
+		// console.log("PToken Amount:", smallNum(await PToken.balanceOf(wallet_1.address)));
+		// await ProjectTrade.connect(wallet_1).sell(PToken.address, bigNum(100), bigNum_6(10));
+		
+		await ProjectTrade.connect(wallet_1).sell(PToken.address, bigNum(4000), bigNum_6(7));
+		await ProjectTrade.connect(wallet_1).sell(PToken.address, bigNum(1000), bigNum_6(4));
+		await ProjectTrade.connect(wallet_1).sell(PToken.address, bigNum(100), bigNum_6(8));
+		// console.log("PToken Amount:", smallNum(await PToken.balanceOf(wallet_1.address)));
+		// console.log("PToken of Trade Contract Amount:", smallNum(await PToken.balanceOf(ProjectTrade.address)));
 
 		// console.log("<=== Sell 1000 PToken for 100 YUSD ===>");
 		// await PToken.connect(wallet_1).approve(ProjectTrade.address, bigNum(1000));
@@ -69,19 +73,29 @@ describe("Test ProjectTrade Contract", function () {
 		// console.log("set 100 YUSD per PToken as admin");
 		// await ProjectTrade.setPriceByAdmin(PToken.address, bigNum_6(100));
 
-		console.log("<=== Buy 100 PToken for 70 YUSD ===>");
-		await YUSD.connect(wallet_1).approve(ProjectTrade.address, bigNum_6(15000));
-		console.log("YUSD Amount:", smallNum_6(await YUSD.balanceOf(wallet_1.address)));
-		await ProjectTrade.connect(wallet_1).buy(PToken.address, bigNum(10), bigNum_6(70));
-		console.log("YUSD Amount:", smallNum_6(await YUSD.balanceOf(wallet_1.address)));
-		console.log("YUSD of Trade Contract Amount:", smallNum_6(await YUSD.balanceOf(ProjectTrade.address)));
-
-		// console.log("<=== Buy 100 PToken for 100 YUSD ===>");
+		// console.log("<=== Buy 100 PToken for 70 YUSD ===>");
 		// await YUSD.connect(wallet_1).approve(ProjectTrade.address, bigNum_6(15000));
 		// console.log("YUSD Amount:", smallNum_6(await YUSD.balanceOf(wallet_1.address)));
-		// await ProjectTrade.connect(wallet_1).buy(PToken.address, bigNum(10), bigNum_6(100));
+		// await ProjectTrade.connect(wallet_1).buy(PToken.address, bigNum(10), bigNum_6(70));
 		// console.log("YUSD Amount:", smallNum_6(await YUSD.balanceOf(wallet_1.address)));
 		// console.log("YUSD of Trade Contract Amount:", smallNum_6(await YUSD.balanceOf(ProjectTrade.address)));
+
+		// console.log("<=== Buy 100 PToken for 100 YUSD ===>");
+		await YUSD.connect(wallet_2).approve(ProjectTrade.address, bigNum_6(1000000));
+		console.log("Wallet2  YUSD   Amount:", smallNum_6(await YUSD.balanceOf(wallet_2.address)));
+		await ProjectTrade.connect(wallet_2).buy(PToken.address, bigNum(6000), bigNum_6(7.5));
+		
+		// await ProjectTrade.connect(wallet_2).buy(PToken.address, bigNum(100000), bigNum_6(0.27));
+		// await ProjectTrade.connect(wallet_2).buy(PToken.address, bigNum(75000), bigNum_6(0.33));
+		// await ProjectTrade.connect(wallet_2).buy(PToken.address, bigNum(80000), bigNum_6(0.25));
+		// await ProjectTrade.connect(wallet_2).buy(PToken.address, bigNum(100000), bigNum_6(0.3));
+
+
+		// console.log("Wallet1  YUSD   Amount:", smallNum_6(await YUSD.balanceOf(wallet_1.address)));
+		// console.log("Wallet2  YUSD   Amount:", smallNum_6(await YUSD.balanceOf(wallet_2.address)));
+		// console.log("Contract YUSD   Amount:", smallNum_6(await YUSD.balanceOf(ProjectTrade.address)));
+		// console.log("Wallet2  PToken Amount:", smallNum(await PToken.balanceOf(wallet_2.address)));
+		// console.log("Contract PToken Amount:", smallNum(await PToken.balanceOf(ProjectTrade.address)));
 
 		// console.log("<=== Buy 10 PToken for 80 YUSD ===>");
 		// await YUSD.connect(wallet_1).approve(ProjectTrade.address, bigNum_6(15000));
@@ -94,21 +108,29 @@ describe("Test ProjectTrade Contract", function () {
 		// console.log("Buy   Orders:", await ProjectTrade.buyOrders(PToken.address, 0));
 		// console.log("Buy   Orders:", await ProjectTrade.buyOrders(PToken.address, 1));
 		// console.log("Buy   Orders:", await ProjectTrade.buyOrders(PToken.address, 2));
-		// console.log("Buy   Orders:", await ProjectTrade.getBuyOrders(PToken.address));
-		// console.log("Sell  Orders:", await ProjectTrade.getSellOrders(PToken.address));
-		// console.log("Transactions:", await ProjectTrade.getTransactions(PToken.address));
+		// console.log("Buy   Orders:", await ProjectTrade.buyOrders(PToken.address, 3));
 
-		// console.log("<=== Cancel Order ===>");
-		await ProjectTrade.connect(wallet_1).cancelOrder(PToken.address, 0);
+		await ProjectTrade.cancelOrders(PToken.address);
+		// await ProjectTrade.removeOrders(PToken.address);
+
+		console.log("Buy   Orders:", await ProjectTrade.getBuyOrders(PToken.address));
 		console.log("Sell  Orders:", await ProjectTrade.getSellOrders(PToken.address));
+		console.log("Transactions:", await ProjectTrade.getTransactions(PToken.address));
 		
-		console.log("PToken Amount:", smallNum(await PToken.balanceOf(wallet_1.address)));
-		console.log("PToken of Trade Contract Amount:", smallNum(await PToken.balanceOf(ProjectTrade.address)));
+		console.log("Balance in Contract1:", await ProjectTrade.balanceOfUserInContract(PToken.address, wallet_1.address));
+		console.log("Balance in Contract2:", await ProjectTrade.balanceOfUserInContract(PToken.address, wallet_2.address));
+
+		// // console.log("<=== Cancel Order ===>");
+		// await ProjectTrade.connect(wallet_1).cancelOrder(PToken.address, 0);
+		// console.log("Sell  Orders:", await ProjectTrade.getSellOrders(PToken.address));
 		
-		await ProjectTrade.connect(wallet_1).cancelOrder(PToken.address, 1);
-		console.log("Buy  Orders:", await ProjectTrade.getBuyOrders(PToken.address));
-		console.log("YUSD Amount:", smallNum_6(await YUSD.balanceOf(wallet_1.address)));
-		console.log("YUSD of Trade Contract Amount:", smallNum_6(await YUSD.balanceOf(ProjectTrade.address)));
+		// console.log("PToken Amount:", smallNum(await PToken.balanceOf(wallet_1.address)));
+		// console.log("PToken of Trade Contract Amount:", smallNum(await PToken.balanceOf(ProjectTrade.address)));
+		
+		// await ProjectTrade.connect(wallet_1).cancelOrder(PToken.address, 1);
+		// console.log("Buy  Orders:", await ProjectTrade.getBuyOrders(PToken.address));
+		// console.log("YUSD Amount:", smallNum_6(await YUSD.balanceOf(wallet_1.address)));
+		// console.log("YUSD of Trade Contract Amount:", smallNum_6(await YUSD.balanceOf(ProjectTrade.address)));
 	})
 
 	// it("Sell", async function () {

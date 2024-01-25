@@ -205,6 +205,22 @@ contract YUSD is IERC20, SafeMath, Ownable {
         return (_amount * 10 ** 6 * 10 ** 18) / uint256(getETHPrice());
     }
 
+    /// @notice return the balance by YOC(decimal:18) for _amount YUSD
+    /// @param _amount the amount that user wants to mint.
+    function getYOCAmountForMint(
+        uint256 _amount
+    ) public view returns (uint256) {
+        uint256 requiredETHAmount = getETHAmountForMint(_amount);
+        address[] memory WETH_YOCpath = new address[](2);
+        WETH_YOCpath[0] = WETH;
+        WETH_YOCpath[1] = YOC;
+        uint256[] memory amounts = YocSwapRouter.getAmountsOut(
+            requiredETHAmount,
+            WETH_YOCpath
+        );
+        return amounts[1];
+    }
+
     /// @notice return the ETH price by USD(decimal:6)
     function getETHPrice() public view returns (uint256) {
         (, int256 USD, , , ) = ETHFeed.latestRoundData(); // return price that the decimal is 8, USD decimal is 6 so `divide 100`
@@ -232,7 +248,7 @@ contract YUSD is IERC20, SafeMath, Ownable {
     }
 
     function mint(uint256 _amount) public payable returns (bool success) {
-        uint256 requiredETHAmount = _amount * 10 ** 6 * 10 ** 18 / getETHPrice();
+        uint256 requiredETHAmount = getETHAmountForMint(_amount);
         require(msg.value >= requiredETHAmount, "Insufficient payment");
         // uint256 beforeETHBalance = address(this).balance;
         // uint256 beforeYOCBalance = IERC20(YOC).balanceOf(address(this));
@@ -253,6 +269,31 @@ contract YUSD is IERC20, SafeMath, Ownable {
 
         _mint(msg.sender, _amount);
         emit Mint(msg.sender, _amount, requiredETHAmount);
+        return true;
+    }
+
+    function mintWithYOC(uint256 _amount) public returns (bool success) {
+        uint256 requiredYOCAmount = getYOCAmountForMint(_amount);
+        IERC20(YOC).transferFrom(msg.sender, address(this), requiredYOCAmount);
+
+        IERC20(YOC).approve(
+            address(YocSwapRouter),
+            (requiredYOCAmount * 75) / 100
+        );
+
+        address[] memory YOC_WETHpath = new address[](2);
+        YOC_WETHpath[0] = YOC;
+        YOC_WETHpath[1] = WETH;
+        YocSwapRouter.swapExactTokensForETH(
+            (requiredYOCAmount * 75) / 100,
+            0,
+            YOC_WETHpath,
+            address(this),
+            block.timestamp + 3600
+        );
+
+        _mint(msg.sender, _amount);
+        emit Mint(msg.sender, _amount, requiredYOCAmount);
         return true;
     }
 
@@ -334,7 +375,8 @@ contract YUSD is IERC20, SafeMath, Ownable {
     }
 
     function getReblancedDetailByFunction2()
-        public view
+        public
+        view
         onlyAdmin
         returns (bool isETHtoYOC, uint256 transferredAmount)
     {
@@ -395,7 +437,7 @@ contract YUSD is IERC20, SafeMath, Ownable {
             //     address(this),
             //     block.timestamp + 36000
             // );
-            
+
             IERC20(YOC).approve(address(YocSwapRouter), transferredAmount);
             // require(IERC20(YOC).balanceOf(address(this)) >= transferredAmount, "insuficient amount");
             // require(false, concatStrings("bbbb:", uint256ToString(IERC20(YOC).balanceOf(address(this)))));
@@ -458,6 +500,5 @@ contract YUSD is IERC20, SafeMath, Ownable {
         return string(result);
     }
 
-    receive() external payable {
-    }
+    receive() external payable {}
 }
