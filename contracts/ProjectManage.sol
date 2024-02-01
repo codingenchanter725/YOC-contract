@@ -2,13 +2,13 @@
 
 pragma solidity >=0.7.0 <0.9.0;
 
-import "@openzeppelin/contracts/access/Ownable.sol";
 import "./Project.sol";
 import "./TokenTemplate.sol";
 import "./interfaces/IYOCMasterChef.sol";
 import "./interfaces/IProjectTrade.sol";
+import "./utils/RestrictedAccess.sol";
 
-contract ProjectManage is Ownable {
+contract ProjectManage is RestrictedAccess {
     using Counters for Counters.Counter;
     Counters.Counter private totalProjectCount;
 
@@ -61,7 +61,8 @@ contract ProjectManage is Ownable {
         _infoAD[4] = address(masterchef); // MasterChef
 
         Project newProject = new Project(_infoST, _infoNB, _infoAD, sellAmount);
-        masterchef.addAuthorized(address(newProject));
+        newProject.addAuthorizedUser(msg.sender);
+        masterchef.addAuthorizedUser(address(newProject));
         newProject.init();
         IERC20(address(newToken)).transfer(
             address(newProject),

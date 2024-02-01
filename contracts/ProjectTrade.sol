@@ -106,7 +106,7 @@ contract ProjectTrade is SafeMath, Ownable {
     mapping(address => uint256[]) public sellOrders;
     mapping(address => mapping(address => uint256))
         public balanceOfUserInContract;
-    mapping(address => bool) _pause;
+    mapping(address => bool) public paused;
 
     event OrderCreated(
         address pToken,
@@ -131,9 +131,14 @@ contract ProjectTrade is SafeMath, Ownable {
         uint256 timestamp
     );
     event CancelOrder(address pToken, uint256 orderId);
-    event Pause(address pToken);
+    event Pause(address pToken, bool paused);
     event CancelAllOrders(address pToken);
     event RemoveAllOrders(address pToken);
+
+    modifier whenNotPaused(address _pToken) {
+        require(!paused[_pToken], "Contract is paused");
+        _;
+    }
 
     constructor(address _YUSD, address _treasury) {
         YUSD = IERC20(_YUSD);
@@ -153,12 +158,13 @@ contract ProjectTrade is SafeMath, Ownable {
     }
 
     function pause(address _pToken) public onlyOwner {
-        _pause[_pToken] = true;
-        emit Pause(_pToken);
+        paused[_pToken] = true;
+        emit Pause(_pToken, true);
     }
 
     function unpause(address _pToken) public onlyOwner {
-        _pause[_pToken] = false;
+        paused[_pToken] = false;
+        emit Pause(_pToken, false);
     }
 
     function getBuyOrders(
@@ -187,7 +193,11 @@ contract ProjectTrade is SafeMath, Ownable {
         transaction = transactions[_pToken];
     }
 
-    function buy(address _pToken, uint256 _amount, uint256 _price) external {
+    function buy(
+        address _pToken,
+        uint256 _amount,
+        uint256 _price
+    ) external whenNotPaused(_pToken) {
         require(_amount > 0, "invalid amount");
         uint256 YUSDAmount = (((_amount * _price) /
             (10 ** IERC20(_pToken).decimals())) * (PERCENT_PRECISION + FEE)) /
@@ -262,7 +272,11 @@ contract ProjectTrade is SafeMath, Ownable {
         }
     }
 
-    function sell(address _pToken, uint256 _amount, uint256 _price) external {
+    function sell(
+        address _pToken,
+        uint256 _amount,
+        uint256 _price
+    ) external whenNotPaused(_pToken) {
         require(_amount > 0, "invalid amount");
 
         IERC20(_pToken).transferFrom(msg.sender, address(this), _amount);

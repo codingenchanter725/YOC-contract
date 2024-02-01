@@ -55,7 +55,7 @@ async function main() {
     // await contractVerify(yocMasterChefContract.address, 'YOCMasterChef', [YOC.address, deployer.address]);
     // console.log("YocMasterChef Complete!\n\n\n\n");
 
-    // await YOC.addSpecialUser(yocMasterChefContract.address);
+    // await YOC.addAuthorizedUser(yocMasterChefContract.address);
     // console.log("Apply specialUsers\n");
 
     // // const YUSDFactory = await hre.ethers.getContractFactory("YUSD");
@@ -84,7 +84,7 @@ async function main() {
     await contractVerify(projectManageContract.address, "ProjectManage", ["0x0c0E6bdd4f74Fe8629FACD4cDCC550714adEA95F", ProjectTrade.address]);
     console.log("ProjectManage Complete!\n\n\n\n");
 
-    // await yocMasterChefContract.addAuthorized(projectManageContract.address);
+    // await yocMasterChefContract.addAuthorizedUser(projectManageContract.address);
 
     const projectDetailFactory = await hre.ethers.getContractFactory("ProjectDetail");
     const projectDetailContract = await projectDetailFactory.deploy();

@@ -66,7 +66,7 @@ describe("Test YUSD", function () {
         yocMasterChefContract = await yocMasterChefFactory.deploy(YOC.address, deployer.address);
         await yocMasterChefContract.deployed();
         console.log("YocMasterChef Address:", yocMasterChefContract.address + "\n");
-        await YOC.addSpecialUser(yocMasterChefContract.address);
+        await YOC.addAuthorizedUser(yocMasterChefContract.address);
     })
 
     it("staking", async function () {

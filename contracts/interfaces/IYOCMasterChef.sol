@@ -34,5 +34,5 @@ interface IYOCMasterChef {
 
     function poolLength() external returns (uint256);
 
-    function addAuthorized(address _address) external;
+    function addAuthorizedUser(address _address) external;
 }

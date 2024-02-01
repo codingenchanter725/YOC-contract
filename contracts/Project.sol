@@ -3,11 +3,11 @@
 pragma solidity >=0.7.0 <0.9.0;
 
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
-import "@openzeppelin/contracts/access/Ownable.sol";
 import "./Token.sol";
 import "./interfaces/IYOCMasterChef.sol";
 import "./interfaces/IProjectTrade.sol";
 import "./interfaces/IYOC.sol";
+import "./utils/RestrictedAccess.sol";
 
 interface IShareToken {
     function snapshot() external;
@@ -23,7 +23,7 @@ interface IShareToken {
 // ----------------------------------------------------------------------------
 // Trust contract
 // ----------------------------------------------------------------------------
-contract Project is Ownable {
+contract Project is RestrictedAccess {
     IERC20 public shareToken;
     IERC20 public investToken;
 
@@ -109,7 +109,7 @@ contract Project is Ownable {
      */
     function updateMultiplier(
         uint256 _multiplier
-    ) public onlyOwner returns (bool) {
+    ) public onlyAuthorized returns (bool) {
         // masterchef
         multiplier = _multiplier;
         return true;
@@ -117,7 +117,7 @@ contract Project is Ownable {
 
     function updateProjectWallet(
         address _projectWallet
-    ) public onlyOwner returns (bool) {
+    ) public onlyAuthorized returns (bool) {
         projectWallet = _projectWallet;
         return true;
     }
@@ -150,6 +150,8 @@ contract Project is Ownable {
             totalRewardYocAmount = masterchef.pendingYOC(pId, address(this));
             masterchef.withdrawAll(pId);
             masterchef.set(pId, 0, false);
+
+            investToken.transfer(projectWallet, investTotalAmount);
         }
     }
 
@@ -288,5 +290,29 @@ contract Project is Ownable {
             totalRewardYocAmount) / shareToken.totalSupply();
         userClaimInvestState[msg.sender] = true;
         IYOC(YOC).transfer(msg.sender, claimAmount);
+    }
+
+    function manualMoveTrade() external onlyAuthorized {
+        uint256 currentShareTokenOfContract = shareToken.balanceOf(
+            address(this)
+        );
+        require(
+            currentShareTokenOfContract > 0,
+            "can't call in traded project"
+        );
+        shareToken.transfer(projectWallet, currentShareTokenOfContract);
+        if (
+            ((sellAmount - currentShareTokenOfContract) * 100) / sellAmount <
+            ongoingPercent
+        ) {
+            endDate += (endDate - startDate);
+        }
+        investToken.transfer(projectWallet, investTotalAmount);
+        emit Participated(
+            address(this),
+            0,
+            currentShareTokenOfContract,
+            projectWallet
+        );
     }
 }

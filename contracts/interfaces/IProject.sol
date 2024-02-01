@@ -44,6 +44,8 @@ interface IProject {
         address user
     ) external view returns (bool, uint256, bool);
 
+    function pId() external view returns (uint256);
+
     function multiplier() external view returns (uint256);
 
     function projectWallet() external view returns (address);

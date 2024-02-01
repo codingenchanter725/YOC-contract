@@ -4,7 +4,7 @@
 
 pragma solidity >=0.7.0 <0.9.0;
 
-import "@openzeppelin/contracts/access/Ownable.sol";
+import "./utils/RestrictedAccess.sol";
 
 // ----------------------------------------------------------------------------
 // ERC Token Standard #20 Interface
@@ -71,7 +71,7 @@ contract SafeMath {
     }
 }
 
-contract YOC is IERC20, SafeMath, Ownable {
+contract YOC is IERC20, SafeMath, RestrictedAccess {
     // name, symbol, decimals are a part of ERC20 standard, and are OPTIONAL
     string public name;
     string public symbol;
@@ -81,7 +81,6 @@ contract YOC is IERC20, SafeMath, Ownable {
     uint256 public constant MINT_INTERVAL = 1; // minting interval in seconds
     uint256 public constant MINT_AMOUNT_PER = 100 * 10000;
     uint256 public lastMintTime;
-    mapping(address => bool) public specialUsers;
 
     mapping(address => uint256) private balances;
     mapping(address => mapping(address => uint256)) private allowances;
@@ -97,30 +96,6 @@ contract YOC is IERC20, SafeMath, Ownable {
         decimals = _decimals;
 
         lastMintTime = block.timestamp;
-        specialUsers[msg.sender] = true;
-    }
-
-    // Modifier to restrict minting to special users
-    modifier onlySpecialUser() {
-        require(specialUsers[msg.sender], "Only special users can mint tokens");
-        _;
-    }
-
-    // Function to add a special user
-    function addSpecialUser(address user) external onlySpecialUser {
-        require(!specialUsers[user], "User is already a special user");
-        specialUsers[user] = true;
-    }
-
-    // Function to remove a special user
-    function removeSpecialUser(address user) external onlySpecialUser {
-        require(specialUsers[user], "User is not a special user");
-        specialUsers[user] = false;
-    }
-
-    // Function to check if a user is a special user
-    function isSpecialUser(address user) external view returns (bool) {
-        return specialUsers[user];
     }
 
     function totalSupply() public view virtual override returns (uint256) {
@@ -146,8 +121,8 @@ contract YOC is IERC20, SafeMath, Ownable {
     ) public virtual override returns (bool) {
         require(spender != address(0), "ERC20: approve to the zero address");
 
-        allowances[_msgSender()][spender] += amount;
-        emit Approval(_msgSender(), spender, amount);
+        allowances[msg.sender][spender] += amount;
+        emit Approval(msg.sender, spender, amount);
         return true;
     }
 
@@ -212,7 +187,7 @@ contract YOC is IERC20, SafeMath, Ownable {
     function mint(
         address recipient,
         uint256 amount
-    ) external onlySpecialUser returns (bool success) {
+    ) external onlyAuthorized returns (bool success) {
         _mint(recipient, amount);
 
         emit Transfer(address(this), recipient, amount);

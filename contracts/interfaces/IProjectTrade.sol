@@ -7,4 +7,6 @@ interface IProjectTrade {
         address _pToken,
         address _user
     ) external view returns (uint256);
+
+    function paused(address _pToken) external view returns (bool);
 }

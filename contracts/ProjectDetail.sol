@@ -37,14 +37,14 @@ contract ProjectDetail {
         uint256 startDate;
         uint256 endDate;
         uint256 ongoingPercent;
+        uint256 pId;
         uint256 multiplier;
         address projectWallet;
         uint256 investTotalAmount;
+        bool tradePaused;
     }
 
     struct ProfitDetails {
-        uint256 depositProfitAmount;
-        uint256 originProfitAmount;
         bool claimable;
         uint256 claimableAmount;
         bool joinState;
@@ -88,6 +88,24 @@ contract ProjectDetail {
         detail.investToken.tokenAddress = address(InvestToken);
         detail.investToken.decimals = InvestToken.decimals();
         detail.investToken.symbol = InvestToken.symbol();
+
+        detail.project.title = project_.title();
+        detail.project.description = project_.description();
+        detail.project.category = project_.category();
+        detail.project.projectWebsite = project_.projectWebsite();
+        detail.project.icon = project_.icon();
+        detail.project.symbolImage = project_.symbolImage();
+        detail.project.shareTokenPrice = project_.shareTokenPrice();
+        detail.project.roi = project_.roi();
+        detail.project.startDate = project_.startDate();
+        detail.project.endDate = project_.endDate();
+        detail.project.ongoingPercent = project_.ongoingPercent();
+        detail.project.pId = project_.pId();
+        detail.project.multiplier = project_.multiplier();
+        detail.project.projectWallet = project_.projectWallet();
+        detail.project.investTotalAmount = project_.investTotalAmount();
+        detail.project.tradePaused = ProjectTrade.paused(address(project_));
+
         if (user_ != address(0)) {
             detail.shareToken.balance = ShareToken.balanceOf(user_);
             detail.shareToken.allowance = ShareToken.allowance(

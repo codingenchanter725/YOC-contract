@@ -8,33 +8,9 @@ import "@openzeppelin/contracts/security/ReentrancyGuard.sol";
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import "./interfaces/IYOC.sol";
+import "./utils/RestrictedAccess.sol";
 
-contract Ownable {
-    address public owner;
-    mapping(address => bool) public authorized;
-
-    modifier onlyOwner() {
-        require(
-            msg.sender == owner || authorized[msg.sender],
-            "Only owner or authorized addresses can call this function"
-        );
-        _;
-    }
-
-    constructor() {
-        owner = msg.sender;
-    }
-
-    function addAuthorized(address _address) external onlyOwner {
-        authorized[_address] = true;
-    }
-
-    function removeAuthorized(address _address) external onlyOwner {
-        authorized[_address] = false;
-    }
-}
-
-contract YOCMasterChef is Ownable, ReentrancyGuard {
+contract YOCMasterChef is RestrictedAccess, ReentrancyGuard {
     using SafeMath for uint256;
     using SafeERC20 for IERC20;
 
@@ -108,7 +84,7 @@ contract YOCMasterChef is Ownable, ReentrancyGuard {
         pools = poolInfo.length;
     }
 
-    function setTreasury(address _treasury) external onlyOwner {
+    function setTreasury(address _treasury) external onlyAuthorized {
         treasury = _treasury;
     }
 
@@ -122,7 +98,7 @@ contract YOCMasterChef is Ownable, ReentrancyGuard {
         IERC20 _lpToken,
         bool _isYocPool,
         bool _withUpdate
-    ) external onlyOwner {
+    ) external onlyAuthorized {
         require(_lpToken.balanceOf(address(this)) >= 0, "None BEP20 tokens");
         require(
             address(_lpToken) != address(YOC),
@@ -156,7 +132,7 @@ contract YOCMasterChef is Ownable, ReentrancyGuard {
         uint256 _pid,
         uint256 _allocPoint,
         bool _withUpdate
-    ) external onlyOwner {
+    ) external onlyAuthorized {
         updatePool(_pid);
 
         if (_withUpdate) {
