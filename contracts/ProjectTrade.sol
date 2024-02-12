@@ -95,6 +95,7 @@ contract ProjectTrade is SafeMath, Ownable {
         uint256[] transactionIds;
         uint256 remainingAmount;
         bool isCancelled;
+        bool isRemoved;
         bool isBuy;
         uint256 timestamp;
     }
@@ -131,6 +132,7 @@ contract ProjectTrade is SafeMath, Ownable {
         uint256 timestamp
     );
     event CancelOrder(address pToken, uint256 orderId);
+    event RemoveOrder(address pToken, uint256 orderId);
     event Pause(address pToken, bool paused);
     event CancelAllOrders(address pToken);
     event RemoveAllOrders(address pToken);
@@ -211,6 +213,7 @@ contract ProjectTrade is SafeMath, Ownable {
             transactionIds: new uint256[](0),
             remainingAmount: _amount,
             isCancelled: false,
+            isRemoved: false,
             isBuy: true,
             timestamp: block.timestamp
         });
@@ -289,6 +292,7 @@ contract ProjectTrade is SafeMath, Ownable {
             transactionIds: new uint256[](0),
             remainingAmount: _amount,
             isCancelled: false,
+            isRemoved: false,
             isBuy: false,
             timestamp: block.timestamp
         });
@@ -724,6 +728,7 @@ contract ProjectTrade is SafeMath, Ownable {
                 msg.sender == owner(),
             "You are not owner of the order"
         );
+        orders[_pToken][_orderId].isRemoved = true;
         if (orders[_pToken][_orderId].remainingAmount > 0) {
             if (orders[_pToken][_orderId].isCancelled) return;
             if (orders[_pToken][_orderId].isBuy == true) {
@@ -742,5 +747,6 @@ contract ProjectTrade is SafeMath, Ownable {
                 );
             }
         }
+        emit RemoveOrder(_pToken, _orderId);
     }
 }

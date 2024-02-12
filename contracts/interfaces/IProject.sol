@@ -55,4 +55,8 @@ interface IProject {
     function investEarnAmountCheck(
         address _userAddr
     ) external view returns (uint256);
+
+    function getUserClaimInvestState(
+        address _userAddr 
+    ) external view returns (bool);
 }

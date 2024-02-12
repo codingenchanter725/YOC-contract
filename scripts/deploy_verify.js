@@ -19,52 +19,52 @@ async function main() {
     console.log("Deploying contracts with the account:", deployer.address);
     console.log("Account balance:", (await deployer.getBalance()).toString());
 
-    // const yocFactory = await hre.ethers.getContractFactory("YOC");
-    // const YOC = await yocFactory.deploy("YOC-Global", "YOCe", 18);
-    // await YOC.deployed();
-    // console.log("YOC Address: ", YOC.address);
-    // await YOC.deployTransaction.wait(5);
-    // await contractVerify(YOC.address, "YOC", ["YOC-Global", "YOCe", 18]);
-    // console.log("YOC Complete!\n\n\n\n");
+    const yocFactory = await hre.ethers.getContractFactory("YOC");
+    const YOC = await yocFactory.deploy("YOC-Global", "YOCe", 18);
+    await YOC.deployed();
+    console.log("YOC Address: ", YOC.address);
+    await YOC.deployTransaction.wait(5);
+    await contractVerify(YOC.address, "YOC", ["YOC-Global", "YOCe", 18]);
+    console.log("YOC Complete!\n\n\n\n");
 
-    // const yocswapFactory = await hre.ethers.getContractFactory("YocswapFactory");
-    // const yocswapContract = await yocswapFactory.deploy(deployer.address);
-    // await yocswapContract.deployed();
-    // console.log("yocswapContract Address:", yocswapContract.address);
-    // console.log("yocswapContract INIT_CODE_PAIR_HASH: ", await yocswapContract.INIT_CODE_PAIR_HASH());
-    // await yocswapContract.deployTransaction.wait(5);
-    // await contractVerify(yocswapContract.address, 'YocswapFactory', [deployer.address]);
-    // console.log("yocswapContract Complete!\n\n\n\n");
+    const yocswapFactory = await hre.ethers.getContractFactory("YocswapFactory");
+    const yocswapContract = await yocswapFactory.deploy(deployer.address);
+    await yocswapContract.deployed();
+    console.log("yocswapContract Address:", yocswapContract.address);
+    console.log("yocswapContract INIT_CODE_PAIR_HASH: ", await yocswapContract.INIT_CODE_PAIR_HASH());
+    await yocswapContract.deployTransaction.wait(5);
+    await contractVerify(yocswapContract.address, 'YocswapFactory', [deployer.address]);
+    console.log("yocswapContract Complete!\n\n\n\n");
 
-    // // /* stop and again */
-    // // // Before deploying, should change 26 line of YocswapLibrary.sol into INIT_CODE_PAIR_HASH.
-    // // // And then, please deploy the YocswapRouter contract
-    // const yocswapRouterFactory = await hre.ethers.getContractFactory("YocswapRouter");
-    // const yocswapRouterContract = await yocswapRouterFactory.deploy(yocswapContract.address, WETH_SEPOLIA);
-    // await yocswapRouterContract.deployed();
-    // console.log("YocswapRouter Address:", yocswapRouterContract.address);
-    // await yocswapRouterContract.deployTransaction.wait(5);
-    // await contractVerify(yocswapRouterContract.address, 'YocswapRouter', [yocswapContract.address, WETH_SEPOLIA]);
-    // console.log("yocswapRouter Complete!\n\n\n\n");
+    // /* stop and again */
+    // // Before deploying, should change 26 line of YocswapLibrary.sol into INIT_CODE_PAIR_HASH.
+    // // And then, please deploy the YocswapRouter contract
+    const yocswapRouterFactory = await hre.ethers.getContractFactory("YocswapRouter");
+    const yocswapRouterContract = await yocswapRouterFactory.deploy(yocswapContract.address, WETH_SEPOLIA);
+    await yocswapRouterContract.deployed();
+    console.log("YocswapRouter Address:", yocswapRouterContract.address);
+    await yocswapRouterContract.deployTransaction.wait(5);
+    await contractVerify(yocswapRouterContract.address, 'YocswapRouter', [yocswapContract.address, WETH_SEPOLIA]);
+    console.log("yocswapRouter Complete!\n\n\n\n");
 
-    // const yocMasterChefFactory = await hre.ethers.getContractFactory("YOCMasterChef");
-    // const yocMasterChefContract = await yocMasterChefFactory.deploy(YOC.address, deployer.address);
-    // await yocMasterChefContract.deployed();
-    // console.log("YocMasterChef Address:", yocMasterChefContract.address + "\n");
-    // await yocMasterChefContract.deployTransaction.wait(5);
-    // await contractVerify(yocMasterChefContract.address, 'YOCMasterChef', [YOC.address, deployer.address]);
-    // console.log("YocMasterChef Complete!\n\n\n\n");
+    const yocMasterChefFactory = await hre.ethers.getContractFactory("YOCMasterChef");
+    const yocMasterChefContract = await yocMasterChefFactory.deploy(YOC.address, deployer.address);
+    await yocMasterChefContract.deployed();
+    console.log("YocMasterChef Address:", yocMasterChefContract.address + "\n");
+    await yocMasterChefContract.deployTransaction.wait(5);
+    await contractVerify(yocMasterChefContract.address, 'YOCMasterChef', [YOC.address, deployer.address]);
+    console.log("YocMasterChef Complete!\n\n\n\n");
 
-    // await YOC.addAuthorizedUser(yocMasterChefContract.address);
-    // console.log("Apply specialUsers\n");
+    await YOC.addAuthorizedUser(yocMasterChefContract.address);
+    console.log("Apply specialUsers\n");
 
-    // // const YUSDFactory = await hre.ethers.getContractFactory("YUSD");
-    // // const YUSD = await YUSDFactory.deploy(WETH_SEPOLIA, YOC.address, yocswapRouterContract.address, deployer.address, SEPOLIA_FEED);
-    // // await YUSD.deployed();
-    // // console.log("YUSD Address:", YUSD.address);
-    // // await YUSD.deployTransaction.wait(5);
-    // // await contractVerify(YUSD.address, 'YUSD', [WETH_SEPOLIA, YOC.address, yocswapRouterContract.address, deployer.address, SEPOLIA_FEED]);
-    // // console.log("YUSD Complete!\n\n\n\n");
+    const YUSDFactory = await hre.ethers.getContractFactory("YUSD");
+    const YUSD = await YUSDFactory.deploy(WETH_SEPOLIA, YOC.address, yocswapRouterContract.address, deployer.address, SEPOLIA_FEED);
+    await YUSD.deployed();
+    console.log("YUSD Address:", YUSD.address);
+    await YUSD.deployTransaction.wait(5);
+    await contractVerify(YUSD.address, 'YUSD', [WETH_SEPOLIA, YOC.address, yocswapRouterContract.address, deployer.address, SEPOLIA_FEED]);
+    console.log("YUSD Complete!\n\n\n\n");
 
     const ProjectTradeFactory = await hre.ethers.getContractFactory("ProjectTrade");
     // const ProjectTrade = await ProjectTradeFactory.deploy(YUSD.address, deployer.address);
@@ -76,15 +76,14 @@ async function main() {
     console.log("ProjectTrade Complete!\n\n\n\n");
 
     const projectManageFactory = await hre.ethers.getContractFactory("ProjectManage");
-    // const projectManageContract = await projectManageFactory.deploy(yocMasterChefContract.address, ProjectTrade.address);
-    const projectManageContract = await projectManageFactory.deploy("0x0c0E6bdd4f74Fe8629FACD4cDCC550714adEA95F", ProjectTrade.address);
+    const projectManageContract = await projectManageFactory.deploy(yocMasterChefContract.address, ProjectTrade.address);
     await projectManageContract.deployed();
     await projectManageContract.deployTransaction.wait(5);
     console.log("ProjectManage Address: ", projectManageContract.address);
-    await contractVerify(projectManageContract.address, "ProjectManage", ["0x0c0E6bdd4f74Fe8629FACD4cDCC550714adEA95F", ProjectTrade.address]);
+    await contractVerify(projectManageContract.address, "ProjectManage", [yocMasterChefContract.address, ProjectTrade.address]);
     console.log("ProjectManage Complete!\n\n\n\n");
 
-    // await yocMasterChefContract.addAuthorizedUser(projectManageContract.address);
+    await yocMasterChefContract.addAuthorizedUser(projectManageContract.address);
 
     const projectDetailFactory = await hre.ethers.getContractFactory("ProjectDetail");
     const projectDetailContract = await projectDetailFactory.deploy();

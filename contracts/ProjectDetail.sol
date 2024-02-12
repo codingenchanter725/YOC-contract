@@ -48,6 +48,7 @@ contract ProjectDetail {
         bool claimable;
         uint256 claimableAmount;
         bool joinState;
+        bool investEarnClaimable;
         uint256 investEarnAmount;
     }
 
@@ -104,7 +105,7 @@ contract ProjectDetail {
         detail.project.multiplier = project_.multiplier();
         detail.project.projectWallet = project_.projectWallet();
         detail.project.investTotalAmount = project_.investTotalAmount();
-        detail.project.tradePaused = ProjectTrade.paused(address(project_));
+        detail.project.tradePaused = ProjectTrade.paused(address(ShareToken));
 
         if (user_ != address(0)) {
             detail.shareToken.balance = ShareToken.balanceOf(user_);
@@ -129,6 +130,9 @@ contract ProjectDetail {
             detail.profit.claimable = claimable;
             detail.profit.claimableAmount = claimableAmount;
             detail.profit.joinState = joinState;
+            detail.profit.investEarnClaimable = project_.getUserClaimInvestState(
+                address(user_)
+            );
             detail.profit.investEarnAmount = project_.investEarnAmountCheck(
                 address(user_)
             );

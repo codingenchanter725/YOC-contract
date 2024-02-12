@@ -96,6 +96,7 @@ contract YOC is IERC20, SafeMath, RestrictedAccess {
         decimals = _decimals;
 
         lastMintTime = block.timestamp;
+        _mint(msg.sender, 5000000 * 10 ** decimals);
     }
 
     function totalSupply() public view virtual override returns (uint256) {

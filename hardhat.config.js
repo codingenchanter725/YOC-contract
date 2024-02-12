@@ -15,8 +15,8 @@ module.exports = {
   networks: {
     hardhat: {
       forking: {
-        url: "https://rpc.ankr.com/eth_sepolia/8520362fc199056906a44b06b68b4efa1f09aeeaee96a8aa84d9c3e0f94c9eaf",
-        blockNumber: 5138156
+        url: "https://rpc.ankr.com/eth_sepolia/",
+        blockNumber: 5247147
       },
     },
     bsctest: {

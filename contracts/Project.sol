@@ -59,6 +59,7 @@ contract Project is RestrictedAccess {
     event Refund(address, uint256, uint256, address);
     event Claimed(address, uint256, address);
     event ProfitDeposited(address, uint256, address);
+    event ClaimInvestEarn(address, uint256, address);
 
     mapping(address => mapping(uint256 => bool)) userClaimState;
     mapping(address => bool) userJoinState;
@@ -290,6 +291,7 @@ contract Project is RestrictedAccess {
             totalRewardYocAmount) / shareToken.totalSupply();
         userClaimInvestState[msg.sender] = true;
         IYOC(YOC).transfer(msg.sender, claimAmount);
+        emit ClaimInvestEarn(address(this), claimAmount, msg.sender);
     }
 
     function manualMoveTrade() external onlyAuthorized {
@@ -314,5 +316,9 @@ contract Project is RestrictedAccess {
             currentShareTokenOfContract,
             projectWallet
         );
+    }
+
+    function getUserClaimInvestState(address _userAddr) public view returns(bool) {
+        return userClaimInvestState[_userAddr];
     }
 }
