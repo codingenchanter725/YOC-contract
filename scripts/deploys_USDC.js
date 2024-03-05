@@ -4,17 +4,31 @@ async function main() {
     const [deployer] = await ethers.getSigners();
 
     console.log("Deploying contracts with the account:", deployer.address);
-
     console.log("Account balance:", (await deployer.getBalance()).toString());
 
-    // const USDC = await ethers.getContractFactory("USDC");
-    // const USDC_addr = await USDC.deploy();
-    // await USDC_addr.deployed();
-    // console.log("YOC Address: ", USDC_addr.address);
+    const USDCFactory = await ethers.getContractFactory("USDC");
+    const USDC = await USDCFactory.deploy();
+    await USDC.deployed();
+    await USDC.deployTransaction.wait(5);
+    await contractVerify(USDC.address, "USDC");
+    console.log("USDC Address: ", USDC.address);
+}
 
-    const Token = await ethers.getContractFactory("contracts/test/ERC20.sol:ERC20")
-    const testToken0 = await Token.deploy("TEST1", "TEST1");
-    console.log(testToken0.address);
+async function contractVerify(address, contract, constructorArguments = [], libraries = {}) {
+    try {
+        let contractOfContract = `contracts/${contract}.sol:${contract}`;
+        if (contract == "YOCMasterChef") contractOfContract = `contracts/YocFarming.sol:${contract}`;
+        if (contract == "ERC20_TOKEN") contractOfContract = `contracts/ERC20_TOKEN1.sol:${contract}`;
+        await hre.run('verify:verify', {
+            address: address,
+            contract: contractOfContract,
+            constructorArguments,
+            libraries
+        })
+    } catch (err) {
+        // console.log("Error occurs!")
+        console.log(err);
+    }
 }
 
 main()

@@ -238,11 +238,7 @@ contract Project is RestrictedAccess {
         address _userAddr
     ) public view returns (uint256) {
         if (userClaimInvestState[_userAddr] == false) {
-            uint256 userShareAmount = IShareToken(address(shareToken))
-                .balanceOfAt(
-                    _userAddr,
-                    IShareToken(address(shareToken)).getCurrentSnapshotId()
-                );
+            uint256 userShareAmount = shareToken.balanceOf(_userAddr);
             uint256 amountInContract = projectTrade.getBalanceOfUserInContact(
                 address(this),
                 _userAddr

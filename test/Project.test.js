@@ -121,66 +121,70 @@ describe("All Test", async function () {
             console.log(details);
         })
 
-        // it("BuyToken", async () => {
-        //     const projectFactory = await ethers.getContractFactory("Project");
-        //     const projectContract = await projectFactory.attach(projectAddresses[0]);
+        it("BuyToken", async () => {
+            const projectFactory = await ethers.getContractFactory("Project");
+            const projectContract = await projectFactory.attach(projectAddresses[0]);
 
-        //     let endDate = await projectContract.endDate();
-        //     console.log('endDate', endDate);
+            let endDate = await projectContract.endDate();
+            console.log('endDate', endDate);
 
-        //     await USDC.connect(wallet0).approve(projectAddresses[0], ethers.utils.parseUnits("2000", 6));
-        //     await projectContract.connect(wallet0).participate(ethers.utils.parseUnits("2000", 6), ethers.utils.parseUnits("2000", 6));
+            // await USDC.connect(wallet0).approve(projectAddresses[0], ethers.utils.parseUnits("2000", 6));
+            // await projectContract.connect(wallet0).participate(ethers.utils.parseUnits("2000", 6), ethers.utils.parseUnits("2000", 6));
 
-        //     await USDC.connect(wallet1).approve(projectAddresses[0], ethers.utils.parseUnits("1000", 6));
-        //     await projectContract.connect(wallet1).participate(ethers.utils.parseUnits("1000", 6), ethers.utils.parseUnits("1000", 6));
+            await USDC.connect(wallet1).approve(projectAddresses[0], ethers.utils.parseUnits("1000", 6));
+            await projectContract.connect(wallet1).participate(ethers.utils.parseUnits("1000", 6), ethers.utils.parseUnits("1000", 6));
 
-        //     console.log("admin deposit");
-        //     await USDC.approve(projectAddresses[0], ethers.utils.parseUnits("1000", 6));
-        //     await projectContract.makeDepositProfit(ethers.utils.parseUnits("1000", 6));
-        //     console.log("admin deposit end");
+            // console.log("admin deposit");
+            // await USDC.approve(projectAddresses[0], ethers.utils.parseUnits("1000", 6));
+            // await projectContract.makeDepositProfit(ethers.utils.parseUnits("1000", 6));
+            // console.log("admin deposit end");
 
-        //     let yocAmount = await YOC.balanceOf(projectContract.address);
-        //     console.log('yocAmount', yocAmount);
-        //     let shareRes1 = await projectContract.investEarnAmountCheck(wallet0.address);
-        //     console.log('reward', shareRes1);
-        //     // await projectContract.claimInvestEarn();
+            let yocAmount = await YOC.balanceOf(projectContract.address);
+            console.log('yocAmount', yocAmount);
+            let shareRes0 = await projectContract.investEarnAmountCheck(wallet0.address);
+            console.log('reward0', shareRes0);
+            let shareRes1 = await projectContract.investEarnAmountCheck(wallet1.address);
+            console.log('reward1', shareRes1);
+            // await projectContract.claimInvestEarn();
 
-        //     endDate = await projectContract.endDate();
-        //     console.log('endDate', endDate);
+            endDate = await projectContract.endDate();
+            console.log('endDate', endDate);
 
-        //     // manualMoveTrade section
-        //     // await USDC.connect(wallet2).approve(projectAddresses[0], ethers.utils.parseUnits("1000", 6));
-        //     // await projectContract.connect(wallet2).participate(ethers.utils.parseUnits("1000", 6), ethers.utils.parseUnits("1000", 6));
-        //     // endDate = await projectContract.endDate();
-        //     // console.log('endDate', endDate);
+            // manualMoveTrade section
+            await USDC.connect(wallet2).approve(projectAddresses[0], ethers.utils.parseUnits("1000", 6));
+            await projectContract.connect(wallet2).participate(ethers.utils.parseUnits("1000", 6), ethers.utils.parseUnits("1000", 6));
+            endDate = await projectContract.endDate();
+            console.log('endDate', endDate);
 
-        //     // await USDC.connect(wallet2).approve(projectAddresses[0], ethers.utils.parseUnits("1000", 6));   
-        //     // await projectContract.connect(wallet2).participate(ethers.utils.parseUnits("1000", 6), ethers.utils.parseUnits("1000", 6));
+            await USDC.connect(wallet2).approve(projectAddresses[0], ethers.utils.parseUnits("1000", 6));
+            await projectContract.connect(wallet2).participate(ethers.utils.parseUnits("1000", 6), ethers.utils.parseUnits("1000", 6));
 
-        //     // yocAmount = await YOC.balanceOf(projectContract.address);
-        //     // console.log('project yocAmount', yocAmount);
-        //     // let shareRes2 = await projectContract.investEarnAmountCheck(wallet0.address);
-        //     // console.log('reward', shareRes2);
+            yocAmount = await YOC.balanceOf(projectContract.address);
+            console.log('project yocAmount', yocAmount);
+            let shareRes2 = await projectContract.investEarnAmountCheck(wallet2.address);
+            console.log('reward2', shareRes2);
 
-        //     // await projectContract.connect(wallet0).claimInvestEarn();
-        //     // yocAmount = await YOC.balanceOf(wallet0.address);
-        //     // console.log('wallet0 yocAmount', yocAmount);
-        //     // // await projectContract.connect(wallet0).claimInvestEarn();
+            // await projectContract.connect(wallet0).claimInvestEarn();
+            // yocAmount = await YOC.balanceOf(wallet0.address);
+            // console.log('wallet0 yocAmount', yocAmount);
+            // // await projectContract.connect(wallet0).claimInvestEarn();
 
-        //     // let shareRes3 = await projectContract.investEarnAmountCheck(wallet0.address);
-        //     // console.log('reward', shareRes3)
-        //     // // let res0 = await projectContract.profitWalletAmountCheck(wallet0.address);
-        //     // // console.log(res0);
+            // let shareRes3 = await projectContract.investEarnAmountCheck(wallet0.address);
+            // console.log('reward', shareRes3)
+            // // let res0 = await projectContract.profitWalletAmountCheck(wallet0.address);
+            // // console.log(res0);
 
-        //     let manualMoveTradeTx = await projectContract.manualMoveTrade();
-        //     await manualMoveTradeTx.wait();
+            // let manualMoveTradeTx = await projectContract.manualMoveTrade();
+            // await manualMoveTradeTx.wait();
 
-        //     let res1 = await projectDetail.getProjectDetails(projectAddresses[0], wallet0.address);
-        //     console.log(res1);
+            // let res0 = await projectDetail.getProjectDetails(projectAddresses[0], wallet0.address);
+            // console.log(res0);
+            let res1 = await projectDetail.getProjectDetails(projectAddresses[0], wallet1.address);
+            console.log(res1);
 
-        //     let USDCAmountOfProjectWallet = await USDC.balanceOf(wallet3.address);
-        //     console.log('USDCAmountOfProjectWallet', ethers.utils.formatUnits(USDCAmountOfProjectWallet, 6))
-        // })
+            let USDCAmountOfProjectWallet = await USDC.balanceOf(wallet3.address);
+            console.log('USDCAmountOfProjectWallet', ethers.utils.formatUnits(USDCAmountOfProjectWallet, 6))
+        })
     })
 })
 

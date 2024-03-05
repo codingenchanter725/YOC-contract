@@ -16,7 +16,7 @@ module.exports = {
     hardhat: {
       forking: {
         url: "https://rpc.ankr.com/eth_sepolia/",
-        blockNumber: 5247147
+        blockNumber: 5417018
       },
     },
     bsctest: {
@@ -30,7 +30,7 @@ module.exports = {
       accounts: [privateKey]
     },
     sepolia: {
-      url: "https://rpc.ankr.com/eth_sepolia/8520362fc199056906a44b06b68b4efa1f09aeeaee96a8aa84d9c3e0f94c9eaf", // "https://ethereum-sepolia.blockpi.network/v1/rpc/public",
+      url: "https://ethereum-sepolia.blockpi.network/v1/rpc/public",
       chainId: 11155111,
       accounts: [privateKey]
     },

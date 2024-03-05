@@ -55,8 +55,9 @@ async function main() {
     await contractVerify(yocMasterChefContract.address, 'YOCMasterChef', [YOC.address, deployer.address]);
     console.log("YocMasterChef Complete!\n\n\n\n");
 
-    await YOC.addAuthorizedUser(yocMasterChefContract.address);
+    const addAuthorizedUserTx = await YOC.addAuthorizedUser(yocMasterChefContract.address);
     console.log("Apply specialUsers\n");
+    await addAuthorizedUserTx.wait();
 
     const YUSDFactory = await hre.ethers.getContractFactory("YUSD");
     const YUSD = await YUSDFactory.deploy(WETH_SEPOLIA, YOC.address, yocswapRouterContract.address, deployer.address, SEPOLIA_FEED);
@@ -67,12 +68,11 @@ async function main() {
     console.log("YUSD Complete!\n\n\n\n");
 
     const ProjectTradeFactory = await hre.ethers.getContractFactory("ProjectTrade");
-    // const ProjectTrade = await ProjectTradeFactory.deploy(YUSD.address, deployer.address);
-    const ProjectTrade = await ProjectTradeFactory.deploy("0x99da355c817BC41413aE8D8771832271521aeac2", deployer.address);
+    const ProjectTrade = await ProjectTradeFactory.deploy(YUSD.address, deployer.address);
     await ProjectTrade.deployed();
     console.log("ProjectTrade Address:", ProjectTrade.address);
     await ProjectTrade.deployTransaction.wait(5);
-    await contractVerify(ProjectTrade.address, 'ProjectTrade', ["0x99da355c817BC41413aE8D8771832271521aeac2", deployer.address]);
+    await contractVerify(ProjectTrade.address, 'ProjectTrade', [YUSD.address, deployer.address]);
     console.log("ProjectTrade Complete!\n\n\n\n");
 
     const projectManageFactory = await hre.ethers.getContractFactory("ProjectManage");
