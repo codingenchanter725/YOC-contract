@@ -273,10 +273,7 @@ contract Project is RestrictedAccess {
             userClaimInvestState[msg.sender] == false,
             "You have already claimed"
         );
-        uint256 userShareAmount = IShareToken(address(shareToken)).balanceOfAt(
-            (msg.sender),
-            IShareToken(address(shareToken)).getCurrentSnapshotId()
-        );
+        uint256 userShareAmount = shareToken.balanceOf(msg.sender);
         uint256 amountInContract = projectTrade.getBalanceOfUserInContact(
             address(this),
             (msg.sender)
@@ -314,7 +311,30 @@ contract Project is RestrictedAccess {
         );
     }
 
-    function getUserClaimInvestState(address _userAddr) public view returns(bool) {
+    function getUserClaimInvestState(
+        address _userAddr
+    ) public view returns (bool) {
         return userClaimInvestState[_userAddr];
+    }
+
+    function uint256ToString(
+        uint256 value
+    ) internal pure returns (string memory) {
+        if (value == 0) {
+            return "0";
+        }
+        uint256 temp = value;
+        uint256 digits;
+        while (temp != 0) {
+            digits++;
+            temp /= 10;
+        }
+        bytes memory buffer = new bytes(digits);
+        while (value != 0) {
+            digits -= 1;
+            buffer[digits] = bytes1(uint8(48 + uint256(value % 10)));
+            value /= 10;
+        }
+        return string(buffer);
     }
 }
